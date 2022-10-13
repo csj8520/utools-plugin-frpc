@@ -1,0 +1,23 @@
+{
+  "$schema": "../node_modules/vite-plugin-utools-helper/dist/schema.json",
+  "name": "z6ii8ylb",
+  "pluginName": "frpc 客户端",
+  "description": "frpc 客户端，可视化操作",
+  "author": "https://github.com/csj8520",
+  "homepage": "https://github.com/csj8520/utools-plugin-frpc",
+  "version": "0.0.1",
+  "logo": "logo.png",
+  "main": "index.html",
+  "preload": "preload.js",
+  "development": {
+    "main": "http://127.0.0.1:3101",
+    "preload": "preload.js"
+  },
+  "features": [
+    {
+      "code": "frpc",
+      "explain": "frpc 客户端",
+      "cmds": ["frpc 客户端", "内网穿透"]
+    }
+  ]
+}
