@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+export const delay = (t: number) => new Promise(res => setTimeout(res, t));
+
 const platformDict: Record<string, string> = {
   darwin: 'darwin',
   win32: 'windows',

@@ -4,7 +4,7 @@
       <el-tab-pane label="基本设置" name="basis"><tab-basis-settings ref="basisSettingsRef" /></el-tab-pane>
       <el-tab-pane label="其他设置" name="other"><tab-other-settings ref="otherSettingsRef" /></el-tab-pane>
       <el-tab-pane label="服务列表" name="proxy"><tab-proxy /></el-tab-pane>
-      <el-tab-pane label="日志" name="log"><tab-logs :logs="logs" @clean="handleCleanLogs" /></el-tab-pane>
+      <el-tab-pane label="日志" name="log"><tab-log :logs="logs" @clean="handleCleanLogs" /></el-tab-pane>
     </el-tabs>
     <div class="main__btns--left">
       <p>Frpc Version: {{ frpcVersion || 'none' }}</p>
@@ -84,9 +84,9 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import TabBasisSettings from './views/basis-settings/index.vue';
 import TabOtherSettings from './views/other-settings/index.vue';
 import TabProxy from './views/proxy/index.vue';
-import TabLogs from './views/logs/index.vue';
+import TabLog from './views/log/index.vue';
 
-import Dowload from './components/download.vue';
+import Download from './components/download.vue';
 
 import { config } from './config';
 
@@ -155,6 +155,10 @@ async function initFrpc() {
   frpc.on('exit', syncRuningStatus);
   frpc.on('log', log => logs.value.push(...log.split('\n')));
 }
+
+window.addEventListener('beforeunload', () => {
+  frpc.isRuning && frpc.exit();
+});
 
 onMounted(initFrpc);
 </script>

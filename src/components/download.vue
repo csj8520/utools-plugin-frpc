@@ -3,13 +3,16 @@
     <div v-if="!searchLatest.url" class="download__loading">
       <p>正在为你查找最新版 Frpc 客户端</p>
       <span v-if="searchLatest.loading" v-loading="searchLatest.loading" element-loading-background="rgba(0,0,0,0)"></span>
-      <p v-if="searchLatest.error">获取失败</p>
+      <template v-if="searchLatest.error">
+        <p>获取失败，你可以手动下载 frpc 可执行文件放入：</p>
+        <p>{{ frpc.frpcBinPath }}</p>
+      </template>
     </div>
     <template v-if="searchLatest.url">
       <el-input class="download__mb" v-model="searchLatest.url"> <template #prepend>下载地址</template></el-input>
       <el-progress class="download__mb" :percentage="progress" />
       <div class="download__btns">
-        <el-button @click="handleDownload" type="primary" :disabled="cancelTokens">开始下载</el-button>
+        <el-button @click="handleDownload" type="primary" :disabled="!!cancelTokens">开始下载</el-button>
         <el-button @click="handleCancle">取消</el-button>
       </div>
     </template>
@@ -44,10 +47,11 @@
 
 <script lang="ts" setup>
 import SevenZip from '7z-wasm';
-import { reactive, ref, watch } from 'vue';
+import { h, reactive, ref, watch } from 'vue';
 import axios, { CancelTokenSource } from 'axios';
+import { Action, ElMessage, ElMessageBox } from 'element-plus';
+
 import { getFrpcLatestVersion } from '../utils';
-import { ElMessage, ElMessageBox } from 'element-plus';
 
 const { frpc, platform, arch } = window.preload;
 
@@ -68,6 +72,7 @@ watch(
       searchLatest.loading = true;
       searchLatest.error = false;
       searchLatest.url = '';
+      progress.value = 0;
 
       const latest = await getFrpcLatestVersion(platform, arch);
       searchLatest.url = 'https://ghproxy.com/' + latest.browser_download_url;
@@ -85,8 +90,25 @@ watch(
 
 async function handleDownload() {
   try {
+    if (utools.isWindows()) {
+      const res: Action = await ElMessageBox.confirm(
+        h('p', [
+          '如果系统检测到有病毒，请允许此操作 ',
+          h(
+            'a',
+            {
+              href: 'javascript:void(0)',
+              onClick: () => utools.ubrowser.goto('https://github.com/fatedier/frp/issues/1204').run({})
+            },
+            '查看详情'
+          )
+        ])
+      ).catch(e => e);
+      if (res === 'cancel') return;
+    }
+
     if (frpc.isRuning) {
-      const res = await ElMessageBox.confirm('需要先关闭 Frpc').catch(e => e);
+      const res: Action = await ElMessageBox.confirm('需要先关闭 Frpc').catch(e => e);
       if (res === 'cancel') return;
       frpc.exit();
     }
@@ -135,7 +157,6 @@ async function handleDownload() {
 function handleCancle() {
   cancelTokens.value?.cancel();
   cancelTokens.value = void 0;
-  progress.value = 0;
   emit('update:modelValue', false);
 }
 </script>

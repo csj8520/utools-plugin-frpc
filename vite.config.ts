@@ -30,7 +30,7 @@ export default defineConfig({
     }),
     createUpxPlugin({
       // outDir: 'upx',
-      outFileName: 'tinypng-[version].upx'
+      outFileName: 'frpc-client-[version].upx'
     })
   ]
 });
