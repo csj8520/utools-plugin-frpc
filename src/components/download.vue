@@ -98,7 +98,7 @@ async function handleDownload() {
             'a',
             {
               href: 'javascript:void(0)',
-              onClick: () => utools.ubrowser.goto('https://github.com/fatedier/frp/issues/1204').run({})
+              onClick: () => utools.shellOpenExternal('https://github.com/fatedier/frp/issues/1204')
             },
             '查看详情'
           )
