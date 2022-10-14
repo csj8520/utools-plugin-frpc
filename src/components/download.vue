@@ -125,18 +125,18 @@ async function handleDownload() {
     const archiveData = new Uint8Array(data);
     const sevenZip = await SevenZip({ print: console.log });
     const name = new URL(searchLatest.url).pathname.split('/').at(-1)!;
-    const stream = sevenZip.FS.open(name, 'w+', 0x777);
+    const stream = sevenZip.FS.open(name, 'w+', 0o777);
     sevenZip.FS.write(stream, archiveData, 0, archiveData.length);
     sevenZip.FS.close(stream);
     let file: Uint8Array | void;
     if (name.endsWith('.zip')) {
       sevenZip.callMain(['e', name, 'frpc.exe', '-r']);
-      sevenZip.FS.chmod('frpc.exe', 0x777);
+      sevenZip.FS.chmod('frpc.exe', 0o777);
       file = sevenZip.FS.readFile('frpc.exe', { encoding: 'binary' });
     } else if (name.endsWith('.tar.gz')) {
       sevenZip.callMain(['e', name]);
       sevenZip.callMain(['e', name.slice(0, -3), 'frpc', '-r']);
-      sevenZip.FS.chmod('frpc', 0x777);
+      sevenZip.FS.chmod('frpc', 0o777);
       file = sevenZip.FS.readFile('frpc', { encoding: 'binary' });
     }
     if (file) {

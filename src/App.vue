@@ -110,6 +110,9 @@ const frpcVersion = ref<string>('');
 const changed = computed(() => !isEqual(config.value, originConfig.value));
 
 function handleRun() {
+  if (changed.value) return ElMessage.warning('你有修改还未保存');
+  if (!originConfig.value.common.server_addr) return ElMessage.warning('服务器地址你还未填写');
+  if (!originConfig.value.common.server_port) return ElMessage.warning('服务器端口你还未填写');
   loadings.run = true;
   runing.value ? frpc.exit() : frpc.run();
 }
