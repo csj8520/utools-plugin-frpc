@@ -13,7 +13,7 @@
         <el-input v-model="config.common.user" />
       </el-form-item>
       <el-form-item label="令牌" prop="token">
-        <el-input v-model="config.common.token" />
+        <el-input v-model="config.common.token" placeholder="token" type="password" show-password />
       </el-form-item>
     </div>
     <el-form-item label="通信协议" prop="protocol">
