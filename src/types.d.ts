@@ -189,6 +189,10 @@ declare namespace FrpcConfig {
       custom_domains: string;
       /** 自定义子域名 */
       subdomain: string;
+      plugin: 'https2http';
+      plugin_crt_path:string;
+      plugin_key_path:string;
+      plugin_local_addr:string;
     }
     interface STCP extends Common {
       type: 'stcp';
