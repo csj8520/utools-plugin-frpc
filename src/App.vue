@@ -6,23 +6,25 @@
       <el-tab-pane label="服务列表" name="proxy"><tab-proxy /></el-tab-pane>
       <el-tab-pane label="日志" name="log"><tab-log :logs="logs" @clean="handleCleanLogs" /></el-tab-pane>
     </el-tabs>
-    <div class="main__btns--left">
-      <p>Frpc Version: {{ frpcVersion || 'none' }}</p>
-      <el-button type="success" link @click="showDownloadFrpc = true">{{ frpcVersion ? '检查更新' : '下载 Frpc' }}</el-button>
-    </div>
-    <div class="main__btns--right">
-      <el-switch
-        size="large"
-        :model-value="runing"
-        :disabled="!haveFrpcBinFile"
-        inline-prompt
-        active-text="开"
-        inactive-text="关"
-        @change="handleRun"
-        :loading="loadings.run"
-      />
-      <el-button :disabled="!changed" type="success" @click="handleSave">保存</el-button>
-      <el-button :disabled="!changed" type="info" @click="handleReset">复位</el-button>
+    <div class="main__btn">
+      <div>
+        <p>Frpc Version: {{ frpcVersion || 'none' }}</p>
+        <el-button type="success" link @click="showDownloadFrpc = true">{{ frpcVersion ? '检查更新' : '下载 Frpc' }}</el-button>
+      </div>
+      <div>
+        <el-switch
+          size="large"
+          :model-value="runing"
+          :disabled="!haveFrpcBinFile"
+          inline-prompt
+          active-text="开"
+          inactive-text="关"
+          @change="handleRun"
+          :loading="loadings.run"
+        />
+        <el-button :disabled="!changed" type="success" @click="handleSave">保存</el-button>
+        <el-button :disabled="!changed" type="info" @click="handleReset">复位</el-button>
+      </div>
     </div>
     <download v-model="showDownloadFrpc" @success="initFrpc" />
   </div>
@@ -31,11 +33,15 @@
 <style lang="scss" scoped>
 .main {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  overflow: hidden;
   :deep(.el-tabs) {
+    flex: 1;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 100%;
     .el-tabs__header {
       flex-shrink: 0;
       margin: 0;
@@ -52,13 +58,14 @@
     }
   }
 
-  &__btns,
-  &__btns {
-    &--left,
-    &--right {
-      position: absolute;
-      left: 10px;
-      bottom: 5px;
+  &__btn {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 10px;
+    border-top: solid 1px var(--el-border-color-light);
+
+    > div {
       display: flex;
       align-items: center;
       height: 40px;
@@ -66,16 +73,11 @@
         margin-left: 12px;
       }
     }
-    &--right {
-      left: unset;
-      right: 10px;
-    }
   }
 }
 </style>
 
 <script setup lang="ts">
-import * as jsIni from 'js-ini';
 import { useDark } from '@vueuse/core';
 import { ElMessage } from 'element-plus';
 import { isEqual, cloneDeep } from 'lodash';
@@ -94,7 +96,7 @@ useDark();
 const { frpc } = window.preload;
 
 const activeTab = ref('basis');
-const originConfig = ref<FrpcConfig>({ common: {} });
+const originConfig = ref<FrpcConfig>({ common: {}, proxys: [] });
 
 const logs = ref<string[]>([]);
 const runing = ref<boolean>(false);
@@ -131,9 +133,9 @@ async function handleSave() {
     loadings.saveConfig = true;
     if (!(await basisSettingsRef.value.validate())) return (activeTab.value = 'basis'), ElMessage.error('请检查基本设置');
     if (!(await otherSettingsRef.value.validate())) return (activeTab.value = 'other'), ElMessage.error('请检查其他设置');
-    const ini = jsIni.stringify(config.value);
-    await frpc.saveConfig(ini);
-    originConfig.value = cloneDeep(config.value);
+    const _config = cloneDeep(config.value);
+    await frpc.saveConfig(_config);
+    originConfig.value = _config;
   } finally {
     loadings.saveConfig = false;
   }
@@ -147,8 +149,7 @@ async function initFrpc() {
   haveFrpcBinFile.value = await frpc.haveFrpcBinFile();
   if (!haveFrpcBinFile.value) return (showDownloadFrpc.value = true);
 
-  const iniConfig = await frpc.getConfig();
-  const _config = { common: {}, ...(jsIni.parse(iniConfig, { comment: '#' }) as any) };
+  const _config = await frpc.getConfig();
   frpcVersion.value = await frpc.getFrpcVersion();
   originConfig.value = _config;
   config.value = cloneDeep(_config);

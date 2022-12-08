@@ -17,7 +17,7 @@
   &__clean {
     position: absolute;
     right: 25px;
-    bottom: 60px;
+    bottom: 20px;
   }
 }
 </style>
@@ -25,6 +25,7 @@
 <script lang="ts" setup>
 import { ref, watch, nextTick } from 'vue';
 import { Delete } from '@element-plus/icons-vue';
+
 import { delay } from '../../utils';
 
 const props = withDefaults(defineProps<{ logs?: string[] }>(), { logs: () => [] });

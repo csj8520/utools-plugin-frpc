@@ -8,7 +8,7 @@ type DeepPartial<T> = {
 
 interface FrpcConfig {
   common: Partial<FrpcConfig.Common>;
-  [proxy: string]: FrpcConfig.Proxy;
+  proxys: FrpcConfig.Proxy[];
 }
 
 declare namespace FrpcConfig {
@@ -116,6 +116,10 @@ declare namespace FrpcConfig {
   namespace Proxy {
     // 通用配置
     interface Common {
+      // 扩展参数
+      _name: string;
+      _enable: boolean;
+
       // 基础配置
       /** 是否启用加密功能 */
       use_encryption: boolean;

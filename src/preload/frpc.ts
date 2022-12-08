@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import * as jsIni from 'js-ini';
 import { EventEmitter } from 'typed-events.ts';
 import { ChildProcessWithoutNullStreams, spawn, execFile } from 'child_process';
 
@@ -25,14 +26,33 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     this.frpcBinPath = op.frpcBinPath;
   }
 
-  public async getConfig() {
-    const stat = await fs.stat(this.configPath).catch(() => null);
-    if (!stat?.isFile()) return '';
-    return (await fs.readFile(this.configPath)).toString();
+  public iniToJson(ini: string): FrpcConfig {
+    const { common = {}, ...proxys } = jsIni.parse(ini, { comment: '#' }) as any;
+    return {
+      common,
+      proxys: Object.entries(proxys).map(([_name, value]) => ({ _name, _enable: true, ...(value as any) }))
+    };
   }
 
-  public async saveConfig(config: string) {
-    await fs.writeFile(this.configPath, config);
+  public jsonToIni(json: FrpcConfig): string {
+    const proxys = json.proxys.filter(it => it._enable).reduce((obj, { _name, _enable, ...other }) => ({ ...obj, [_name as string]: other }), {});
+    return jsIni.stringify({ common: json.common, ...proxys });
+  }
+
+  public async getConfig(): Promise<FrpcConfig> {
+    // 读取 db 数据，若无数据则读取 ini 配置
+    const data = utools.dbStorage.getItem('config');
+    if (data) return data as FrpcConfig;
+    const stat = await fs.stat(this.configPath).catch(() => null);
+    if (!stat?.isFile()) return { common: {}, proxys: [] };
+    const ini = await fs.readFile(this.configPath);
+    return this.iniToJson(ini.toString());
+  }
+
+  public async saveConfig(json: FrpcConfig) {
+    // 保存配置到 utools，同时写入到 ini
+    utools.dbStorage.setItem('config', json);
+    await fs.writeFile(this.configPath, this.jsonToIni(json));
   }
 
   public async getFrpcVersion() {
@@ -59,6 +79,7 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     this.process.stderr.on('data', (chunks: Buffer) => this.emit('log', chunks.toString()));
 
     this.emit('run');
+    this.emit('log', `Frpc pid: ${this.process.pid}`);
     this.process.on('error', err => this.emit('log', err.message));
     this.process.on('exit', (code, signal) => {
       this.process = null;
