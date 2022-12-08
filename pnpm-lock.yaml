@@ -8,6 +8,7 @@ specifiers:
   '@types/node': 18.8.3
   '@vitejs/plugin-vue': ^3.1.2
   '@vueuse/core': ^9.3.0
+  ansicolor: ^1.1.100
   axios: ^1.1.2
   element-plus: ^2.2.18
   js-ini: ^1.5.1
@@ -27,6 +28,7 @@ dependencies:
   7z-wasm: 1.0.1
   '@element-plus/icons-vue': 2.0.10_vue@3.2.40
   '@vueuse/core': 9.3.0_vue@3.2.40
+  ansicolor: 1.1.100
   axios: 1.1.2
   element-plus: 2.2.18_vue@3.2.40
   js-ini: 1.5.1
@@ -344,6 +346,10 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
     dev: true
+
+  /ansicolor/1.1.100:
+    resolution: {integrity: sha512-Jl0pxRfa9WaQVUX57AB8/V2my6FJxrOR1Pp2qqFbig20QB4HzUoQ48THTKAgHlUCJeQm/s2WoOPcoIDhyCL/kw==}
+    dev: false
 
   /anymatch/3.1.2:
     resolution: {integrity: sha512-P43ePfOAIupkguHUycrc4qJ9kz8ZiuOUijaETwX7THt0Y/GNK7v0aa8rY816xWjZ7rJdA5XdMcpVFTKMq+RvWg==}

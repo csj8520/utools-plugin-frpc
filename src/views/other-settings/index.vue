@@ -50,7 +50,7 @@
 .other-settings {
   height: 100%;
   overflow-y: auto;
-  padding: 10px 10px 50px;
+  padding: 10px;
 
   &__group {
     display: flex;
@@ -86,6 +86,6 @@ watch(
 );
 function handleEnableAdminUi(value: CheckboxValueType) {
   if (value) return;
-  config.value.common.admin_port = 0;
+  delete config.value.common.admin_port;
 }
 </script>

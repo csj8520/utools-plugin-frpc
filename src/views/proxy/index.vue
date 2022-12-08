@@ -1,5 +1,5 @@
 <template>
-  <el-table :data="config.proxys" stripe>
+  <el-table class="proxy" :data="config.proxys" stripe>
     <el-table-column prop="_name" label="服务备注名" width="100px" />
     <el-table-column label="远程地址" :formatter="handleFormatRemoteUrl" />
     <el-table-column label="内网地址" width="150px">
@@ -31,8 +31,11 @@
 <style lang="scss" scoped>
 .proxy {
   height: 100%;
-  overflow-y: auto;
-  padding: 10px 10px 50px;
+
+  :deep(.el-scrollbar__wrap) {
+    padding-bottom: 50px;
+  }
+
   &__group {
     display: flex;
     flex-wrap: wrap;
@@ -46,7 +49,7 @@
     position: absolute;
     z-index: 3;
     right: 10px;
-    bottom: 20px;
+    bottom: 10px;
   }
 }
 </style>

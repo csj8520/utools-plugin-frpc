@@ -1,6 +1,8 @@
 <template>
   <div class="log" ref="el" @scroll="handleScroll">
-    <p v-for="(it, idx) in logs" :key="idx">{{ it }}</p>
+    <p v-for="(it, idx) in logs" :key="idx">
+      <span v-for="(t, i) in it.spans" :style="t.css">{{ t.text }}</span>
+    </p>
     <el-tooltip content="清空日志" placement="top">
       <el-button class="log__clean" type="danger" :icon="Delete" circle @click="emit('clean')" />
     </el-tooltip>
@@ -11,24 +13,26 @@
 .log {
   height: 100%;
   overflow-y: auto;
-  padding: 10px 10px 50px;
+  padding: 10px;
   line-height: 1.4;
   font-size: 14px;
+  word-break: break-all;
   &__clean {
     position: absolute;
     right: 25px;
-    bottom: 20px;
+    bottom: 10px;
   }
 }
 </style>
 
 <script lang="ts" setup>
+import { AnsiColored } from 'ansicolor';
 import { ref, watch, nextTick } from 'vue';
 import { Delete } from '@element-plus/icons-vue';
 
 import { delay } from '../../utils';
 
-const props = withDefaults(defineProps<{ logs?: string[] }>(), { logs: () => [] });
+const props = withDefaults(defineProps<{ logs?: AnsiColored[] }>(), { logs: () => [] });
 const emit = defineEmits(['clean']);
 const el = ref<HTMLDivElement>(null!);
 

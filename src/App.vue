@@ -81,6 +81,7 @@
 import { useDark } from '@vueuse/core';
 import { ElMessage } from 'element-plus';
 import { isEqual, cloneDeep } from 'lodash';
+import ansicolor, { AnsiColored } from 'ansicolor';
 import { computed, onMounted, reactive, ref } from 'vue';
 
 import TabBasisSettings from './views/basis-settings/index.vue';
@@ -98,7 +99,7 @@ const { frpc } = window.preload;
 const activeTab = ref('basis');
 const originConfig = ref<FrpcConfig>({ common: {}, proxys: [], custom: {} });
 
-const logs = ref<string[]>([]);
+const logs = ref<AnsiColored[]>([]);
 const runing = ref<boolean>(false);
 const haveFrpcBinFile = ref<boolean>(false);
 
@@ -158,8 +159,13 @@ async function initFrpc() {
   config.value = cloneDeep(_config);
 
   frpc.removeAllListeners();
+  runing.value = frpc.isRuning;
   frpc.on('exit', () => (runing.value = false));
-  frpc.on('log', log => logs.value.push(...log.split('\n')));
+  frpc.on('log', log => {
+    const lines = log.trim().split('\n');
+    logs.value.push(...lines.map(it => ansicolor.parse(it)));
+    if (logs.value.length > 1000) logs.value.splice(0, logs.value.length - 1000);
+  });
 }
 
 // for dev

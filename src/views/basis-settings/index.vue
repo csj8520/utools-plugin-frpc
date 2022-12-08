@@ -39,7 +39,7 @@
 .basis-settings {
   height: 100%;
   overflow-y: auto;
-  padding: 10px 10px 50px;
+  padding: 10px;
 
   &__group {
     display: flex;
