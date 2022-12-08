@@ -11,10 +11,15 @@
     <el-table-column label="开启压缩" width="90px" align="center">
       <template #="{ row }"><el-checkbox :model-value="row.use_compression" /></template>
     </el-table-column>
-    <el-table-column width="190px" align="center">
+    <el-table-column label="操作" width="160px" align="center">
       <template #="{ row, $index }">
         <el-button type="primary" plain @click="handleShowEdit($index)">编辑</el-button>
         <el-button type="danger" plain @click="hanldeDel($index)">删除</el-button>
+      </template>
+    </el-table-column>
+    <el-table-column label="启用/禁用" width="90px" align="center">
+      <template #="{ row }">
+        <el-switch size="large" v-model="row._enable" inline-prompt active-text="开" inactive-text="关" />
       </template>
     </el-table-column>
   </el-table>
@@ -39,8 +44,9 @@
 
   &__add {
     position: absolute;
+    z-index: 3;
     right: 10px;
-    bottom: 60px;
+    bottom: 20px;
   }
 }
 </style>

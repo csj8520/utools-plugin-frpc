@@ -40,6 +40,9 @@
         <el-icon><QuestionFilled /></el-icon>
       </el-tooltip>
     </el-form-item>
+    <el-form-item label="保存后重启" prop="tls_enable">
+      <el-checkbox v-model="config.custom.saveRestart" />
+    </el-form-item>
   </el-form>
 </template>
 

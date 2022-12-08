@@ -96,7 +96,7 @@ useDark();
 const { frpc } = window.preload;
 
 const activeTab = ref('basis');
-const originConfig = ref<FrpcConfig>({ common: {}, proxys: [] });
+const originConfig = ref<FrpcConfig>({ common: {}, proxys: [], custom: {} });
 
 const logs = ref<string[]>([]);
 const runing = ref<boolean>(false);
@@ -111,17 +111,14 @@ const frpcVersion = ref<string>('');
 
 const changed = computed(() => !isEqual(config.value, originConfig.value));
 
-function handleRun() {
+async function handleRun() {
   if (changed.value) return ElMessage.warning('你有修改还未保存');
   if (!originConfig.value.common.server_addr) return ElMessage.warning('服务器地址你还未填写');
   if (!originConfig.value.common.server_port) return ElMessage.warning('服务器端口你还未填写');
   loadings.run = true;
-  runing.value ? frpc.exit() : frpc.run();
-}
-
-function syncRuningStatus() {
-  runing.value = frpc.isRuning;
+  runing.value ? await frpc.exit() : frpc.run();
   loadings.run = false;
+  runing.value = frpc.isRuning;
 }
 
 async function handleReset() {
@@ -136,6 +133,12 @@ async function handleSave() {
     const _config = cloneDeep(config.value);
     await frpc.saveConfig(_config);
     originConfig.value = _config;
+    if (!runing.value) return;
+    if (!config.value.custom.saveRestart) return ElMessage.info('保存成功，可手动重启以生效');
+    loadings.run = true;
+    await frpc.exit();
+    await handleRun();
+    ElMessage.success('保存并重启成功');
   } finally {
     loadings.saveConfig = false;
   }
@@ -154,12 +157,12 @@ async function initFrpc() {
   originConfig.value = _config;
   config.value = cloneDeep(_config);
 
-  syncRuningStatus();
-  frpc.on('run', syncRuningStatus);
-  frpc.on('exit', syncRuningStatus);
+  frpc.removeAllListeners();
+  frpc.on('exit', () => (runing.value = false));
   frpc.on('log', log => logs.value.push(...log.split('\n')));
 }
 
+// for dev
 window.addEventListener('beforeunload', () => {
   frpc.isRuning && frpc.exit();
 });

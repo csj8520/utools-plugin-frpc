@@ -9,6 +9,9 @@ type DeepPartial<T> = {
 interface FrpcConfig {
   common: Partial<FrpcConfig.Common>;
   proxys: FrpcConfig.Proxy[];
+  custom: {
+    saveRestart?: boolean;
+  };
 }
 
 declare namespace FrpcConfig {

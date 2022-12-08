@@ -5,7 +5,6 @@ import { ChildProcessWithoutNullStreams, spawn, execFile } from 'child_process';
 
 type FrpcEvent = {
   log(log: string): void;
-  run(): void;
   exit(): void;
 };
 
@@ -30,7 +29,8 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     const { common = {}, ...proxys } = jsIni.parse(ini, { comment: '#' }) as any;
     return {
       common,
-      proxys: Object.entries(proxys).map(([_name, value]) => ({ _name, _enable: true, ...(value as any) }))
+      proxys: Object.entries(proxys).map(([_name, value]) => ({ _name, _enable: true, ...(value as any) })),
+      custom: {}
     };
   }
 
@@ -44,7 +44,7 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     const data = utools.dbStorage.getItem('config');
     if (data) return data as FrpcConfig;
     const stat = await fs.stat(this.configPath).catch(() => null);
-    if (!stat?.isFile()) return { common: {}, proxys: [] };
+    if (!stat?.isFile()) return { common: {}, proxys: [], custom: {} };
     const ini = await fs.readFile(this.configPath);
     return this.iniToJson(ini.toString());
   }
@@ -78,7 +78,6 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     this.process.stdout.on('data', (chunks: Buffer) => this.emit('log', chunks.toString()));
     this.process.stderr.on('data', (chunks: Buffer) => this.emit('log', chunks.toString()));
 
-    this.emit('run');
     this.emit('log', `Frpc pid: ${this.process.pid}`);
     this.process.on('error', err => this.emit('log', err.message));
     this.process.on('exit', (code, signal) => {
@@ -88,7 +87,12 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     });
   }
 
-  public exit() {
-    if (this.isRuning) this.process!.kill();
+  public async exit() {
+    if (!this.isRuning) return;
+    await new Promise<void>(res => {
+      this.process!.once('exit', () => res());
+      this.process!.kill();
+    });
+    this.process = null;
   }
 }
