@@ -2,8 +2,10 @@
   <el-table class="proxy" :data="config.proxys" stripe>
     <el-table-column prop="_name" label="服务备注名" width="100px" />
     <el-table-column label="远程地址" :formatter="handleFormatRemoteUrl" />
-    <el-table-column label="内网地址" width="150px">
-      <template #="{ row }"> {{ `${row.local_ip}:${row.local_port}` }} </template>
+    <el-table-column label="本地地址" width="150px">
+      <template #="{ row }">
+        {{ row.plugin ? row.plugin_local_addr || row.plugin_unix_path || row.plugin_local_path || '-' : `${row.local_ip}:${row.local_port}` }}
+      </template>
     </el-table-column>
     <el-table-column label="开启加密" width="90px" align="center">
       <template #="{ row }"><el-checkbox :model-value="row.use_encryption" /></template>
@@ -74,7 +76,7 @@ function handleFormatRemoteUrl(row: FrpcConfig.Proxy) {
   } else if (row.type === 'tcp' || row.type === 'udp') {
     return `${row.type}://${config.value.common?.server_addr ?? 'unconfig'}:${row.remote_port ?? 'random'}`;
   }
-  return '';
+  return '-';
 }
 
 function handleShowEdit(idx: number) {
@@ -86,10 +88,6 @@ async function handleSaveEdit(_config: FrpcConfig.Proxy) {
   const others = config.value.proxys.slice(0, editIndex.value).concat(config.value.proxys.slice(editIndex.value + 1));
   const hasName = others.some(it => it._name === _config._name);
   if (hasName) return ElMessage.error(`配置：[${_config._name}] 已存在`);
-
-  if (_config.type === 'http' || _config.type === 'https' || _config.type === 'tcpmux') {
-    if (!(_config.custom_domains || _config.subdomain)) return ElMessage.error('自定义域名和子域名两者必须配置一个');
-  }
 
   config.value.proxys[editIndex.value] = _config;
   showEdit.value = false;
