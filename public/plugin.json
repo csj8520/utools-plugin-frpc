@@ -5,7 +5,7 @@
   "description": "frpc 客户端，可视化操作",
   "author": "https://github.com/csj8520",
   "homepage": "https://github.com/csj8520/utools-plugin-frpc",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "logo": "logo.png",
   "main": "index.html",
   "preload": "preload.js",
