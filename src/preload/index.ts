@@ -10,7 +10,7 @@ export const arch = os.arch();
 const baseDir = path.join(utools.getPath('home'), '.utools-plugin-frpc');
 
 const frpcBinPath = path.join(baseDir, platform === 'win32' ? 'frpc.exe' : 'frpc');
-const configPath = path.join(baseDir, 'frpc.ini');
+const configPath = path.join(baseDir, 'frpc.json');
 
 utools.onPluginEnter(async () => {
   const stat = await fs.stat(baseDir).catch(() => null);

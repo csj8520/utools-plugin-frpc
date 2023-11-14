@@ -1,6 +1,5 @@
 import fs from 'fs/promises';
-import * as jsIni from 'js-ini';
-import { EventEmitter } from 'typed-events.ts';
+import { EventEmitter } from '@3xpo/events';
 import { ChildProcessWithoutNullStreams, spawn, execFile } from 'child_process';
 
 type FrpcEvent = {
@@ -25,34 +24,30 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     this.frpcBinPath = op.frpcBinPath;
   }
 
-  public iniToJson(ini: string): FrpcConfig {
-    const { common = {}, ...proxys } = jsIni.parse(ini, { comment: '#' }) as any;
-    return {
-      common,
-      proxys: Object.entries(proxys).map(([_name, value]) => ({ _name, _enable: true, ...(value as any) })),
-      custom: {}
-    };
-  }
-
-  public jsonToIni(json: FrpcConfig): string {
-    const proxys = json.proxys.filter(it => it._enable).reduce((obj, { _name, _enable, ...other }) => ({ ...obj, [_name as string]: other }), {});
-    return jsIni.stringify({ common: json.common, ...proxys });
-  }
-
   public async getConfig(): Promise<FrpcConfig> {
-    // 读取 db 数据，若无数据则读取 ini 配置
-    const data = utools.dbStorage.getItem('config');
+    // 读取 db 数据，若无数据则读取 json 配置
+    const data = utools.dbStorage.getItem('config2');
     if (data) return data as FrpcConfig;
     const stat = await fs.stat(this.configPath).catch(() => null);
-    if (!stat?.isFile()) return { common: {}, proxys: [], custom: {} };
-    const ini = await fs.readFile(this.configPath);
-    return this.iniToJson(ini.toString());
+    if (!stat?.isFile()) return { auth: {}, log: {}, transport: {}, proxies: [], _custom: {} };
+    const file = await fs.readFile(this.configPath);
+    return { auth: {}, log: {}, transport: {}, proxies: [], _custom: {}, ...JSON.parse(file.toString()) };
   }
 
   public async saveConfig(json: FrpcConfig) {
-    // 保存配置到 utools，同时写入到 ini
-    utools.dbStorage.setItem('config', json);
-    await fs.writeFile(this.configPath, this.jsonToIni(json));
+    // 保存配置到 utools，同时写入到 json
+    utools.dbStorage.setItem('config2', json);
+    await fs.writeFile(
+      this.configPath,
+      JSON.stringify(
+        {
+          ...json,
+          proxies: json.proxies.filter(it => it._enable).map(({ _enable: _, ...other }) => ({ ...other }))
+        },
+        void 0,
+        2
+      )
+    );
   }
 
   public async getFrpcVersion() {

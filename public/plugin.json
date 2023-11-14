@@ -10,7 +10,7 @@
   "main": "index.html",
   "preload": "preload.js",
   "development": {
-    "main": "http://127.0.0.1:3101",
+    "main": "http://127.0.0.1:35181",
     "preload": "preload.js"
   },
   "features": [

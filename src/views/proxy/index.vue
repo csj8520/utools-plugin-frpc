@@ -1,17 +1,17 @@
 <template>
-  <el-table class="proxy" :data="config.proxys" stripe>
-    <el-table-column prop="_name" label="服务备注名" width="100px" />
+  <el-table class="proxy" :data="config.proxies" stripe>
+    <el-table-column prop="name" label="服务备注名" width="100px" />
     <el-table-column label="远程地址" :formatter="handleFormatRemoteUrl" />
     <el-table-column label="本地地址" width="150px">
       <template #="{ row }">
-        {{ row.plugin ? row.plugin_local_addr || row.plugin_unix_path || row.plugin_local_path || '-' : `${row.local_ip}:${row.local_port}` }}
+        {{ row.plugin ? row.plugin.localAddr || row.plugin.unixPath || row.plugin.localPath || '-' : `${row.localIP}:${row.localPort}` }}
       </template>
     </el-table-column>
     <el-table-column label="开启加密" width="90px" align="center">
-      <template #="{ row }"><el-checkbox :model-value="row.use_encryption" /></template>
+      <template #="{ row }"><el-checkbox :model-value="row.transport?.useEncryption" /></template>
     </el-table-column>
     <el-table-column label="开启压缩" width="90px" align="center">
-      <template #="{ row }"><el-checkbox :model-value="row.use_compression" /></template>
+      <template #="{ row }"><el-checkbox :model-value="row.transport?.useCompression" /></template>
     </el-table-column>
     <el-table-column label="操作" width="160px" align="center">
       <template #="{ row, $index }">
@@ -27,7 +27,7 @@
   </el-table>
 
   <el-button class="proxy__add" type="primary" @click="handldAdd">添加</el-button>
-  <edit v-model="showEdit" :data="config.proxys[editIndex]" @enter="handleSaveEdit" />
+  <edit v-model="showEdit" :data="config.proxies[editIndex]" @enter="handleSaveEdit" />
 </template>
 
 <style lang="scss" scoped>
@@ -67,14 +67,14 @@ import Edit from './edit.vue';
 const showEdit = ref<boolean>(false);
 const editIndex = ref<number>(-1);
 
-function handleFormatRemoteUrl(row: FrpcConfig.Proxy) {
+function handleFormatRemoteUrl(row: FrpcConfig.Proxie) {
   if (row.type === 'http' || row.type === 'https' || row.type === 'tcpmux') {
     const urls: string[] = [];
-    if (row.custom_domains) urls.push(...row.custom_domains.split(',').map(it => `${row.type}://${it}`));
-    if (row.subdomain) urls.push(`${row.type}://${row.subdomain}.${config.value.common?.server_addr ?? 'unconfig'}`);
+    if (row.customDomains) urls.push(...row.customDomains.map(it => `${row.type}://${it}`));
+    if (row.subdomain) urls.push(`${row.type}://${row.subdomain}.${config.value.serverAddr ?? '-'}`);
     return urls.length ? urls.join(', ') : '-';
   } else if (row.type === 'tcp' || row.type === 'udp') {
-    return `${row.type}://${config.value.common?.server_addr ?? 'unconfig'}:${row.remote_port ?? 'random'}`;
+    return `${row.type}://${config.value.serverAddr ?? '-'}:${row.remotePort ?? '-'}`;
   }
   return '-';
 }
@@ -84,22 +84,22 @@ function handleShowEdit(idx: number) {
   editIndex.value = idx;
 }
 
-async function handleSaveEdit(_config: FrpcConfig.Proxy) {
-  const others = config.value.proxys.slice(0, editIndex.value).concat(config.value.proxys.slice(editIndex.value + 1));
-  const hasName = others.some(it => it._name === _config._name);
-  if (hasName) return ElMessage.error(`配置：[${_config._name}] 已存在`);
+async function handleSaveEdit(_config: FrpcConfig.Proxie) {
+  const others = config.value.proxies.slice(0, editIndex.value).concat(config.value.proxies.slice(editIndex.value + 1));
+  const hasName = others.some(it => it.name === _config.name);
+  if (hasName) return ElMessage.error(`配置：[${_config.name}] 已存在`);
 
-  config.value.proxys[editIndex.value] = _config;
+  config.value.proxies[editIndex.value] = _config;
   showEdit.value = false;
 }
 
 function handldAdd() {
-  handleShowEdit(config.value.proxys.length);
+  handleShowEdit(config.value.proxies.length);
 }
 
 async function hanldeDel(idx: number) {
   const res = await ElMessageBox.confirm('确定要删除吗').catch(e => e);
   if (res === 'cancel') return;
-  config.value.proxys.splice(idx, 1);
+  config.value.proxies.splice(idx, 1);
 }
 </script>

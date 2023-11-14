@@ -128,7 +128,7 @@ async function handleDownload() {
     const stream = sevenZip.FS.open(name, 'w+', 0o777);
     sevenZip.FS.write(stream, archiveData, 0, archiveData.length);
     sevenZip.FS.close(stream);
-    let file: Uint8Array | void;
+    let file: Uint8Array | void = void 0;
     if (name.endsWith('.zip')) {
       sevenZip.callMain(['e', name, 'frpc.exe', '-r']);
       sevenZip.FS.chmod('frpc.exe', 0o777);

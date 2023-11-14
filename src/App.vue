@@ -97,7 +97,7 @@ useDark();
 const { frpc } = window.preload;
 
 const activeTab = ref('basis');
-const originConfig = ref<FrpcConfig>({ common: {}, proxys: [], custom: {} });
+const originConfig = ref<FrpcConfig>({ auth: {}, log: {}, transport: {}, proxies: [], _custom: {} });
 
 const logs = ref<AnsiColored[]>([]);
 const runing = ref<boolean>(false);
@@ -114,8 +114,8 @@ const changed = computed(() => !isEqual(config.value, originConfig.value));
 
 async function handleRun() {
   if (changed.value) return ElMessage.warning('你有修改还未保存');
-  if (!originConfig.value.common.server_addr) return ElMessage.warning('服务器地址你还未填写');
-  if (!originConfig.value.common.server_port) return ElMessage.warning('服务器端口你还未填写');
+  if (!originConfig.value.serverAddr) return ElMessage.warning('服务器地址你还未填写');
+  if (!originConfig.value.serverPort) return ElMessage.warning('服务器端口你还未填写');
   loadings.run = true;
   runing.value ? await frpc.exit() : frpc.run();
   loadings.run = false;
@@ -135,7 +135,7 @@ async function handleSave() {
     await frpc.saveConfig(_config);
     originConfig.value = _config;
     if (!runing.value) return;
-    if (!config.value.custom.saveRestart) return ElMessage.info('保存成功，可手动重启以生效');
+    if (!config.value._custom.saveRestart) return ElMessage.info('保存成功，可手动重启以生效');
     loadings.run = true;
     await frpc.exit();
     await handleRun();
