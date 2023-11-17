@@ -57,14 +57,15 @@ const editIndex = ref<number>(-1);
 function handleFormatRemoteUrl(row: FrpcConfig.Proxie) {
   if (row.type === 'http' || row.type === 'https' || row.type === 'tcpmux') {
     const urls: string[] = [];
-    const path = row.plugin?.type === 'static_file' ? `/${row.plugin.stripPrefix}` : '';
+    const path = row.plugin?.type === 'static_file' ? `/${row.plugin.stripPrefix}/` : '';
     if (row.customDomains) urls.push(...row.customDomains.map(it => `${row.type}://${it}${path}`));
     if (row.subdomain) urls.push(`${row.type}://${row.subdomain}.${config.value.serverAddr ?? '-'}${path}`);
     return urls.length ? urls.join(', ') : '-';
   } else if (row.type === 'tcp' || row.type === 'udp') {
     return `${row.type}://${config.value.serverAddr ?? '-'}:${row.remotePort ?? '-'}`;
+  } else {
+    return `${row.type}://${row.localIP ?? '-'}:${row.localPort ?? '-'}`;
   }
-  return '-';
 }
 
 const remoteUrls = computed(() => config.value.proxies.map(it => handleFormatRemoteUrl(it)));

@@ -43,6 +43,7 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     const data = utools.dbStorage.getItem('config-json');
     if (data) {
       this.config = data as FrpcConfig;
+      await this.saveConfig(this.config);
     } else {
       // 兼容旧数据
       const oldData = utools.dbStorage.getItem('config');
