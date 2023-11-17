@@ -162,6 +162,100 @@ interface ProxyBackend {
   plugin?: ClientPluginOptions;
 }
 
+type ClientPluginOptions =
+  | HTTPProxyPluginOptions
+  | Socks5PluginOptions
+  | StaticFilePluginOptions
+  | UnixDomainSocketPluginOptions
+  | HTTP2HTTPSPluginOptions
+  | HTTPS2HTTPPluginOptions
+  | HTTPS2HTTPSPluginOptions;
+
+/** HTTP 代理插件配置 */
+interface HTTPProxyPluginOptions {
+  type: 'http_proxy';
+  /** HTTP 代理用户名。 */
+  httpUser?: string;
+  /** HTTP 代理密码。 */
+  httpPassword?: string;
+}
+
+/** Socks5 代理插件配置 */
+interface Socks5PluginOptions {
+  type: 'socks5';
+  /** 用户名。 */
+  username?: string;
+  /** 密码。 */
+  password?: string;
+}
+
+/** 静态文件插件配置 */
+interface StaticFilePluginOptions {
+  type: 'static_file';
+  /** 静态文件所在本地路径。 */
+  localPath: string;
+  /** 去除用户 HTTP 请求 Path 的特定前缀。 */
+  stripPrefix?: string;
+  /** HTTP Basic Auth 用户名。 */
+  httpUser?: string;
+  /** HTTP Basic Auth 密码。 */
+  httpPassword?: string;
+}
+
+/** UNIX 域套接字插件配置 */
+interface UnixDomainSocketPluginOptions {
+  type: 'unix_domain_socket';
+  /** UNIX 域套接字的地址。 */
+  unixPath: string;
+}
+
+/** HTTP2HTTPS 代理插件配置 */
+interface HTTP2HTTPSPluginOptions {
+  type: 'http2https';
+  /** 本地 HTTPS 服务地址。 */
+  localAddr: string;
+  /** 替换 Host header。 */
+  hostHeaderRewrite?: string;
+  /** 对请求 Header 的操作配置。 */
+  requestHeaders?: HeaderOperations;
+}
+
+/** HTTPS2HTTP 代理插件配置 */
+interface HTTPS2HTTPPluginOptions {
+  type: 'https2http';
+  /** 本地 HTTPS 服务地址。 */
+  localAddr: string;
+  /** 替换 Host header。 */
+  hostHeaderRewrite?: string;
+  /** 对请求 Header 的操作配置。 */
+  requestHeaders?: HeaderOperations;
+  /** TLS 证书文件路径。 */
+  crtPath?: string;
+  /** TLS 密钥文件路径。 */
+  keyPath?: string;
+}
+
+/** HTTPS2HTTPS 代理插件配置 */
+interface HTTPS2HTTPSPluginOptions {
+  type: 'https2https';
+  /** 本地 HTTPS 服务地址。 */
+  localAddr: string;
+  /** 替换 Host header。 */
+  hostHeaderRewrite?: string;
+  /** 对请求 Header 的操作配置。 */
+  requestHeaders?: HeaderOperations;
+  /** TLS 证书文件路径。 */
+  crtPath?: string;
+  /** TLS 密钥文件路径。 */
+  keyPath?: string;
+}
+
+/** Header 操作配置 */
+interface HeaderOperations {
+  /** 在 Header 中设置指定的 KV 值。 */
+  set?: Record<string, string>;
+}
+
 /** 代理网络层配置。 */
 interface ProxyTransport {
   /** 是否启用加密功能，启用后该代理和服务端之间的通信内容都会被加密传输。 */

@@ -9,6 +9,9 @@ import 'element-plus/es/components/message-box/style/css';
 
 import 'element-plus/theme-chalk/dark/css-vars.css';
 
+import '@unocss/reset/normalize.css';
+import 'virtual:uno.css';
+
 import './style.css';
 import App from './App.vue';
 

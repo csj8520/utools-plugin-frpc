@@ -8,14 +8,14 @@
     </el-tabs>
     <div class="main__btn">
       <div>
-        <p>Frpc Version: {{ frpcVersion || 'none' }}</p>
-        <el-button type="success" link @click="showDownloadFrpc = true">{{ frpcVersion ? '检查更新' : '下载 Frpc' }}</el-button>
+        <p>Frpc Version: {{ frpc.version }}</p>
+        <el-button type="success" link @click="showDownload = true">{{ frpc.version === '0.0.0' ? '下载 Frpc' : '检查更新' }}</el-button>
       </div>
       <div>
         <el-switch
           size="large"
           :model-value="runing"
-          :disabled="!haveFrpcBinFile"
+          :disabled="!frpc.hasFrpcBinFile"
           inline-prompt
           active-text="开"
           inactive-text="关"
@@ -26,7 +26,7 @@
         <el-button :disabled="!changed" type="info" @click="handleReset">复位</el-button>
       </div>
     </div>
-    <download v-model="showDownloadFrpc" @success="initFrpc" />
+    <download v-model="showDownload" @success="initFrpc" />
   </div>
 </template>
 
@@ -101,14 +101,12 @@ const originConfig = ref<FrpcConfig>({ auth: {}, log: {}, transport: {}, proxies
 
 const logs = ref<AnsiColored[]>([]);
 const runing = ref<boolean>(false);
-const haveFrpcBinFile = ref<boolean>(false);
 
-const basisSettingsRef = ref<{ validate: () => Promise<boolean> }>(null!);
-const otherSettingsRef = ref<{ validate: () => Promise<boolean> }>(null!);
+const basisSettingsRef = ref<InstanceType<typeof TabBasisSettings>>(null!);
+const otherSettingsRef = ref<InstanceType<typeof TabOtherSettings>>(null!);
 
 const loadings = reactive({ run: false, saveConfig: false });
-const showDownloadFrpc = ref<boolean>(false);
-const frpcVersion = ref<string>('');
+const showDownload = ref<boolean>(false);
 
 const changed = computed(() => !isEqual(config.value, originConfig.value));
 
@@ -149,23 +147,27 @@ function handleCleanLogs() {
   logs.value = [];
 }
 
+function handleLog(log: string) {
+  const lines = log.trim().split('\n');
+  logs.value.push(...lines.map(it => ansicolor.parse(it)));
+  const maxLine = 4000;
+  if (logs.value.length > maxLine) logs.value.splice(0, logs.value.length - (maxLine - 1000));
+}
 async function initFrpc() {
-  haveFrpcBinFile.value = await frpc.haveFrpcBinFile();
-  if (!haveFrpcBinFile.value) return (showDownloadFrpc.value = true);
+  await frpc.init();
+  showDownload.value = !frpc.hasFrpcBinFile;
 
-  const _config = await frpc.getConfig();
-  frpcVersion.value = await frpc.getFrpcVersion();
+  const _config = frpc.config;
   originConfig.value = _config;
   config.value = cloneDeep(_config);
+  console.log('config.value: ', config.value);
 
   frpc.removeAllListeners();
   runing.value = frpc.isRuning;
   frpc.on('exit', () => (runing.value = false));
-  frpc.on('log', log => {
-    const lines = log.trim().split('\n');
-    logs.value.push(...lines.map(it => ansicolor.parse(it)));
-    if (logs.value.length > 1000) logs.value.splice(0, logs.value.length - 1000);
-  });
+  frpc.on('log', handleLog);
+  frpc.on('error', handleLog);
+  frpc.on('error', ElMessage.error);
 }
 
 // for dev

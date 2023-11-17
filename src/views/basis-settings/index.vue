@@ -13,15 +13,16 @@
         <el-input v-model="config.user" />
       </el-form-item>
       <el-form-item label="令牌" prop="auth.token">
-        <!-- {{ config }} -->
         <el-input v-model="config.auth.token" placeholder="token" type="password" show-password />
       </el-form-item>
     </div>
     <el-form-item label="通信协议" prop="transport.protocol">
       <el-select v-model="config.transport.protocol" placeholder="请选择">
+        <el-option label="quic" value="quic" />
         <el-option label="tcp" value="tcp" />
         <el-option label="kcp" value="kcp" />
         <el-option label="websocket" value="websocket" />
+        <el-option label="wss" value="wss" />
       </el-select>
     </el-form-item>
     <el-form-item label="日志等级" prop="log.level">

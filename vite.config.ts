@@ -1,3 +1,4 @@
+import UnoCSS from 'unocss/vite';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { createPreloadPlugin, createUpxPlugin } from 'vite-plugin-utools-helper';
@@ -16,6 +17,7 @@ export default defineConfig({
   },
   plugins: [
     vue(),
+    UnoCSS(),
     Components({
       resolvers: [ElementPlusResolver()],
       dts: false // use element-plus/global

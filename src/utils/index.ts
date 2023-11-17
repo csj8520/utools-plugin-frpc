@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { components } from '@octokit/openapi-types';
 
 export const delay = (t: number) => new Promise(res => setTimeout(res, t));
 
@@ -17,11 +18,11 @@ const archDict: Record<string, string> = {
 
 export async function getFrpcLatestVersion(platform: NodeJS.Platform, arch: string) {
   if (!(platform in platformDict && arch in archDict)) return null;
-  const { status, data } = await axios.get('https://api.github.com/repos/fatedier/frp/releases');
+  const { status, data } = await axios.get<components['schemas']['release']>('https://api.github.com/repos/fatedier/frp/releases/latest');
   if (status !== 200) return null;
   const name = `${platformDict[platform]}_${archDict[arch]}`;
-  return (data as any[])
-    .map(it => it.assets)
-    .flat(1)
-    .find(it => it.name.includes(name));
+  return {
+    release: data,
+    currentAssets: data.assets.find(it => it.name.includes(name))
+  };
 }

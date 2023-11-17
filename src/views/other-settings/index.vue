@@ -1,5 +1,5 @@
 <template>
-  <el-form class="other-settings" label-position="right" label-width="100px" :model="config" ref="form">
+  <el-form class="p-3 h-full overflow-y-auto" label-position="right" label-width="100px" :model="config" ref="form">
     <el-form-item label="DNS" prop="dnsServer">
       <el-input v-model="config.dnsServer" placeholder="114.114.114.114" />
     </el-form-item>
@@ -12,24 +12,34 @@
     <el-form-item label="开启网页管理">
       <el-checkbox :model-value="!!config.webServer" @change="handleEnableAdminUi" />
     </el-form-item>
-    <div class="other-settings__group" v-if="config.webServer">
-      <el-form-item label="监听地址" prop="webServer.addr">
-        <el-input v-model="config.webServer.addr" placeholder="0.0.0.0" />
+    <template v-if="config.webServer">
+      <div class="flex">
+        <el-form-item class="flex-1" label="监听地址" prop="webServer.addr">
+          <el-input v-model="config.webServer.addr" placeholder="0.0.0.0" />
+        </el-form-item>
+        <el-form-item class="flex-1" label="监听端口" prop="webServer.port" required>
+          <el-input-number v-model="config.webServer.port" :min="0" :max="65535" placeholder="5000" />
+        </el-form-item>
+      </div>
+      <div class="flex">
+        <el-form-item class="flex-1" label="用户名" prop="webServer.user">
+          <el-input v-model="config.webServer.user" placeholder="admin" />
+        </el-form-item>
+        <el-form-item class="flex-1" label="密码" prop="webServer.password">
+          <el-input v-model="config.webServer.password" placeholder="password" type="password" show-password />
+        </el-form-item>
+      </div>
+      <el-form-item>
+        <a href="javascript:void 0" @click="utools.shellOpenPath(webServerUrl)">{{ webServerUrl }}</a>
       </el-form-item>
-      <el-form-item label="监听端口" prop="webServer.port" required>
-        <el-input-number v-model="config.webServer.port" :min="0" :max="65535" placeholder="5000" />
-      </el-form-item>
-      <el-form-item label="用户名" prop="webServer.user">
-        <el-input v-model="config.webServer.user" placeholder="admin" />
-      </el-form-item>
-      <el-form-item label="密码" prop="webServer.password">
-        <el-input v-model="config.webServer.password" placeholder="password" type="password" show-password />
-      </el-form-item>
-    </div>
+    </template>
 
-    <el-form-item label="开启 TLS" prop="transport.tls">
+    <!-- <el-form-item label="开启 TLS" prop="transport.tls">
       <el-checkbox v-model="config.transport.tls" />
-    </el-form-item>
+    </el-form-item> -->
+    <!-- <el-form-item label="禁用标准输出中的日志颜色" prop="log.disablePrintColor">
+      <el-checkbox v-model="config.log.disablePrintColor" />
+    </el-form-item> -->
     <el-form-item label="失败后退出" prop="loginFailExit">
       <el-checkbox :model-value="config.loginFailExit ?? true" @click="config.loginFailExit = !(config.loginFailExit ?? true)" />
       <i class="el-checkbox"></i>
@@ -43,36 +53,26 @@
   </el-form>
 </template>
 
-<style lang="scss" scoped>
-.other-settings {
-  height: 100%;
-  overflow-y: auto;
-  padding: 10px;
-
-  &__group {
-    display: flex;
-    flex-wrap: wrap;
-    padding-right: 20px;
-    .el-form-item {
-      width: 50%;
-    }
-  }
-}
-</style>
-
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { QuestionFilled } from '@element-plus/icons-vue';
 import type { FormInstance, CheckboxValueType } from 'element-plus';
 
 import { config } from '../../config';
+const { utools } = window;
 
 const form = ref<FormInstance>(null!);
 
 defineExpose({ validate: () => form.value.validate().catch(() => false) });
 
+const webServerUrl = computed(() => {
+  if (!config.value.webServer) return '';
+  const addr = config.value.webServer.addr;
+  return `http://${addr === '0.0.0.0' ? '127.0.0.1' : addr || '127.0.0.1'}:${config.value.webServer.port}`;
+});
+
 function handleEnableAdminUi(value: CheckboxValueType) {
   if (value) return delete config.value.webServer;
-  config.value.webServer = {} as any;
+  config.value.webServer = { port: 5000 };
 }
 </script>

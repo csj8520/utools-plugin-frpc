@@ -1,68 +1,55 @@
 <template>
-  <el-table class="proxy" :data="config.proxies" stripe>
+  <el-table class="h-full!" :data="config.proxies" stripe>
     <el-table-column prop="name" label="服务备注名" width="100px" />
-    <el-table-column label="远程地址" :formatter="handleFormatRemoteUrl" />
-    <el-table-column label="本地地址" width="150px">
-      <template #="{ row }">
-        {{ row.plugin ? row.plugin.localAddr || row.plugin.unixPath || row.plugin.localPath || '-' : `${row.localIP}:${row.localPort}` }}
+    <el-table-column label="远程地址" :formatter="handleFormatRemoteUrl">
+      <template #="{ $index }: Scope">
+        <a v-if="remoteUrls[$index].startsWith('http')" href="javascript:void 0" @click="utools.shellOpenPath(remoteUrls[$index])">{{
+          remoteUrls[$index]
+        }}</a>
+        <p v-else>{{ remoteUrls[$index] }}</p>
       </template>
     </el-table-column>
+    <el-table-column label="本地地址" width="170px" :formatter="handleFormatLocalUrl" />
     <el-table-column label="开启加密" width="90px" align="center">
-      <template #="{ row }"><el-checkbox :model-value="row.transport?.useEncryption" /></template>
+      <template #="{ row }: Scope"><el-checkbox :model-value="row.transport?.useEncryption" /></template>
     </el-table-column>
     <el-table-column label="开启压缩" width="90px" align="center">
-      <template #="{ row }"><el-checkbox :model-value="row.transport?.useCompression" /></template>
+      <template #="{ row }: Scope"><el-checkbox :model-value="row.transport?.useCompression" /></template>
     </el-table-column>
     <el-table-column label="操作" width="160px" align="center">
-      <template #="{ row, $index }">
+      <template #="{ $index }: Scope">
         <el-button type="primary" plain @click="handleShowEdit($index)">编辑</el-button>
         <el-button type="danger" plain @click="hanldeDel($index)">删除</el-button>
       </template>
     </el-table-column>
     <el-table-column label="启用/禁用" width="90px" align="center">
-      <template #="{ row }">
+      <template #="{ row }: Scope">
         <el-switch size="large" v-model="row._enable" inline-prompt active-text="开" inactive-text="关" />
       </template>
     </el-table-column>
   </el-table>
 
-  <el-button class="proxy__add" type="primary" @click="handldAdd">添加</el-button>
+  <el-button class="absolute right-3 bottom-3 z-3" type="primary" @click="handldAdd">添加</el-button>
   <edit v-model="showEdit" :data="config.proxies[editIndex]" @enter="handleSaveEdit" />
 </template>
 
 <style lang="scss" scoped>
-.proxy {
-  height: 100%;
-
-  :deep(.el-scrollbar__wrap) {
-    padding-bottom: 50px;
-  }
-
-  &__group {
-    display: flex;
-    flex-wrap: wrap;
-    padding-right: 20px;
-    .el-form-item {
-      width: 50%;
-    }
-  }
-
-  &__add {
-    position: absolute;
-    z-index: 3;
-    right: 10px;
-    bottom: 10px;
-  }
+:deep(.el-scrollbar__wrap) {
+  padding-bottom: 50px;
 }
 </style>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { computed, ref } from 'vue';
+import { ElMessage, ElMessageBox, RenderRowData } from 'element-plus';
 
 import { config } from '../../config';
 
 import Edit from './edit.vue';
+
+const { utools } = window;
+
+type Scope = RenderRowData<FrpcConfig.Proxie>;
 
 const showEdit = ref<boolean>(false);
 const editIndex = ref<number>(-1);
@@ -70,12 +57,27 @@ const editIndex = ref<number>(-1);
 function handleFormatRemoteUrl(row: FrpcConfig.Proxie) {
   if (row.type === 'http' || row.type === 'https' || row.type === 'tcpmux') {
     const urls: string[] = [];
-    if (row.customDomains) urls.push(...row.customDomains.map(it => `${row.type}://${it}`));
-    if (row.subdomain) urls.push(`${row.type}://${row.subdomain}.${config.value.serverAddr ?? '-'}`);
+    const path = row.plugin?.type === 'static_file' ? `/${row.plugin.stripPrefix}` : '';
+    if (row.customDomains) urls.push(...row.customDomains.map(it => `${row.type}://${it}${path}`));
+    if (row.subdomain) urls.push(`${row.type}://${row.subdomain}.${config.value.serverAddr ?? '-'}${path}`);
     return urls.length ? urls.join(', ') : '-';
   } else if (row.type === 'tcp' || row.type === 'udp') {
     return `${row.type}://${config.value.serverAddr ?? '-'}:${row.remotePort ?? '-'}`;
   }
+  return '-';
+}
+
+const remoteUrls = computed(() => config.value.proxies.map(it => handleFormatRemoteUrl(it)));
+
+function handleFormatLocalUrl(row: FrpcConfig.Proxie) {
+  if (!row.plugin) return `${row.localIP}:${row.localPort}`;
+  if (row.plugin.type === 'http2https') return row.plugin.localAddr;
+  if (row.plugin.type === 'https2http') return row.plugin.localAddr;
+  if (row.plugin.type === 'https2https') return row.plugin.localAddr;
+  if (row.plugin.type === 'http_proxy') return `${row.plugin.httpUser || '-'}@${row.plugin.httpPassword || '-'}`;
+  if (row.plugin.type === 'socks5') return `${row.plugin.username || '-'}@${row.plugin.password || '-'}`;
+  if (row.plugin.type === 'static_file') return row.plugin.localPath;
+  if (row.plugin.type === 'unix_domain_socket') return row.plugin.unixPath;
   return '-';
 }
 
