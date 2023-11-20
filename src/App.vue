@@ -77,8 +77,9 @@
 </style>
 
 <script setup lang="ts">
+import semver from 'semver';
 import { useDark } from '@vueuse/core';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { isEqual, cloneDeep } from 'lodash';
 import ansicolor, { AnsiColored } from 'ansicolor';
 import { computed, onMounted, ref } from 'vue';
@@ -115,6 +116,7 @@ async function handleRun() {
   if (changed.value) return ElMessage.warning('你有修改还未保存');
   if (!originConfig.value.serverAddr) return ElMessage.warning('服务器地址你还未填写');
   if (!originConfig.value.serverPort) return ElMessage.warning('服务器端口你还未填写');
+  if (!(await checkVersion())) return;
   frpc.isRuning ? await frpc.exit() : frpc.run();
 }
 
@@ -141,6 +143,20 @@ function handleLog(log: string) {
   const maxLine = 4000;
   if (logs.value.length > maxLine) logs.value.splice(0, logs.value.length - (maxLine - 1000));
 }
+
+async function checkVersion() {
+  if (frpc.hasFrpcBinFile && semver.lt(frpc.version, '0.52.0')) {
+    await ElMessageBox.confirm('frp 现在支持 TOML、YAML 和 JSON 进行配置。INI 已弃用，需更新 frpc 客户端', '版本过低', {
+      showCancelButton: false,
+      showClose: false,
+      closeOnClickModal: false
+    });
+    showDownload.value = true;
+    return false;
+  }
+  return true;
+}
+
 async function initFrpc() {
   await frpc.init();
 
@@ -149,6 +165,8 @@ async function initFrpc() {
   hasFrpcBinFile.value = frpc.hasFrpcBinFile;
 
   showDownload.value = !frpc.hasFrpcBinFile;
+
+  await checkVersion();
 
   originConfig.value = frpc.config;
   config.value = cloneDeep(frpc.config);

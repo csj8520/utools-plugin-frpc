@@ -10,6 +10,9 @@ type FrpcEvent = {
   start(): void;
 };
 
+const CONFIG_KEY = 'config-json';
+const OLD_CONFIG_KEY = 'config';
+
 export class Frpc extends EventEmitter<FrpcEvent> {
   public process: ChildProcessWithoutNullStreams | null = null;
   public configPath: string;
@@ -41,13 +44,13 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     }
 
     // 读取 db 数据，若无数据则读取 json 配置
-    const data = utools.dbStorage.getItem('config-json');
+    const data = utools.dbStorage.getItem(CONFIG_KEY);
     if (data) {
       this.config = data as FrpcConfig;
       await this.saveConfig(this.config);
     } else {
       // 兼容旧数据
-      const oldData = utools.dbStorage.getItem('config');
+      const oldData = utools.dbStorage.getItem(OLD_CONFIG_KEY);
       console.log('oldData: ', oldData);
       if (oldData) {
         this.config = {
@@ -129,7 +132,7 @@ export class Frpc extends EventEmitter<FrpcEvent> {
             })) ?? []
         };
         await this.saveConfig(this.config);
-        // utools.dbStorage.removeItem('config');
+        // utools.dbStorage.removeItem(OLD_CONFIG_KEY);
       } else {
         const stat = await fs.stat(this.configPath).catch(() => null);
         if (!stat?.isFile()) {
@@ -144,7 +147,7 @@ export class Frpc extends EventEmitter<FrpcEvent> {
 
   public async saveConfig(json: FrpcConfig) {
     // 保存配置到 utools，同时写入到 json
-    utools.dbStorage.setItem('config-json', json);
+    utools.dbStorage.setItem(CONFIG_KEY, json);
     await fs.writeFile(
       this.configPath,
       JSON.stringify(

@@ -9,11 +9,11 @@
         <p v-else>{{ remoteUrls[$index] }}</p>
       </template>
     </el-table-column>
-    <el-table-column label="本地地址" width="170px" :formatter="handleFormatLocalUrl" />
-    <el-table-column label="开启加密" width="90px" align="center">
+    <el-table-column label="本地地址" :formatter="handleFormatLocalUrl" />
+    <el-table-column label="开启加密" width="82px" align="center">
       <template #="{ row }: Scope"><el-checkbox :model-value="row.transport?.useEncryption" /></template>
     </el-table-column>
-    <el-table-column label="开启压缩" width="90px" align="center">
+    <el-table-column label="开启压缩" width="82px" align="center">
       <template #="{ row }: Scope"><el-checkbox :model-value="row.transport?.useCompression" /></template>
     </el-table-column>
     <el-table-column label="操作" width="160px" align="center">
