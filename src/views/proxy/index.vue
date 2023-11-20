@@ -24,7 +24,14 @@
     </el-table-column>
     <el-table-column label="启用/禁用" width="90px" align="center">
       <template #="{ row }: Scope">
-        <el-switch size="large" v-model="row._enable" inline-prompt active-text="开" inactive-text="关" />
+        <el-switch
+          size="large"
+          :model-value="config.start?.includes(row.name)"
+          inline-prompt
+          active-text="开"
+          inactive-text="关"
+          @change="handleEnable(row)"
+        />
       </template>
     </el-table-column>
   </el-table>
@@ -92,7 +99,12 @@ async function handleSaveEdit(_config: FrpcConfig.Proxie) {
   const hasName = others.some(it => it.name === _config.name);
   if (hasName) return ElMessage.error(`配置：[${_config.name}] 已存在`);
 
-  config.value.proxies[editIndex.value] = _config;
+  if (editIndex.value === config.value.proxies.length) {
+    config.value.proxies.push(_config);
+    handleEnable(_config);
+  } else {
+    config.value.proxies[editIndex.value] = _config;
+  }
   showEdit.value = false;
 }
 
@@ -103,6 +115,16 @@ function handldAdd() {
 async function hanldeDel(idx: number) {
   const res = await ElMessageBox.confirm('确定要删除吗').catch(e => e);
   if (res === 'cancel') return;
+  if (config.value.start?.includes(config.value.proxies[idx].name)) handleEnable(config.value.proxies[idx]);
   config.value.proxies.splice(idx, 1);
+}
+
+function handleEnable(row: FrpcConfig.Proxie) {
+  config.value.start ||= [];
+  const idx = config.value.start.indexOf(row.name);
+  idx > -1 ? config.value.start.splice(idx, 1) : config.value.start.push(row.name);
+  // 空字符串占位
+  if (config.value.start.length === 0) config.value.start.push('');
+  console.log('config.value.start: ', config.value.start);
 }
 </script>

@@ -7,6 +7,7 @@ type FrpcEvent = {
   log(log: string): void;
   error(log: string): void;
   exit(): void;
+  start(): void;
 };
 
 export class Frpc extends EventEmitter<FrpcEvent> {
@@ -36,7 +37,7 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     const stat = await fs.stat(this.frpcBinPath).catch(() => null);
     this.hasFrpcBinFile = Boolean(stat?.isFile());
     if (this.hasFrpcBinFile) {
-      this.version = (await promisify(execFile)(this.frpcBinPath, ['-v'])).stdout;
+      this.version = (await promisify(execFile)(this.frpcBinPath, ['-v'])).stdout.trim();
     }
 
     // 读取 db 数据，若无数据则读取 json 配置
@@ -69,61 +70,63 @@ export class Frpc extends EventEmitter<FrpcEvent> {
             password: oldData.common.admin_pwd
           },
           _custom: { ...oldData.custom },
-          proxies: (oldData.proxys as any[]).map(it => ({
-            name: it._name,
-            _enable: it._enable,
-            type: it.type,
-            transport: { useCompression: it.use_compression, useEncryption: it.use_encryption },
-            localIP: it.local_ip || it.bind_addr,
-            localPort: it.local_port || it.bind_port,
-            remotePort: it.remote_port,
-            subdomain: it.subdomain,
-            customDomains: it.custom_domains?.split(','),
-            hostHeaderRewrite: it.host_header_rewrite,
-            plugin:
-              it.plugin === 'http_proxy'
-                ? {
-                    type: 'http_proxy',
-                    httpUser: it.plugin_http_user,
-                    httpPassword: it.plugin_http_passwd
-                  }
-                : it.plugin === 'socks5'
-                ? {
-                    type: 'socks5',
-                    username: it.plugin_user,
-                    password: it.plugin_passwd
-                  }
-                : it.plugin === 'static_file'
-                ? {
-                    type: 'static_file',
-                    localPath: it.plugin_local_path,
-                    stripPrefix: it.plugin_strip_prefix,
-                    httpUser: it.plugin_http_user,
-                    httpPassword: it.plugin_http_passwd
-                  }
-                : it.plugin === 'unix_domain_socket'
-                ? {
-                    type: 'unix_domain_socket',
-                    unixPath: it.plugin_unix_path
-                  }
-                : it.plugin === 'http2https'
-                ? {
-                    type: 'http2https',
-                    localAddr: it.plugin_local_addr,
-                    hostHeaderRewrite: it.plugin_host_header_rewrite
-                    // requestHeaders: {}
-                  }
-                : it.plugin === 'https2http' || it.plugin === 'https2https'
-                ? {
-                    type: it.plugin as 'https2http',
-                    localAddr: it.plugin_local_addr,
-                    hostHeaderRewrite: it.plugin_host_header_rewrite,
-                    crtPath: it.plugin_crt_path,
-                    keyPath: it.plugin_key_path
-                    // requestHeaders: {}
-                  }
-                : void 0
-          }))
+          start: (oldData.proxys as any[])?.filter(it => it._enable).map(it => it._name),
+          proxies:
+            (oldData.proxys as any[])?.map(it => ({
+              name: it._name,
+              // _enable: it._enable,
+              type: it.type,
+              transport: { useCompression: it.use_compression, useEncryption: it.use_encryption },
+              localIP: it.local_ip || it.bind_addr,
+              localPort: it.local_port || it.bind_port,
+              remotePort: it.remote_port,
+              subdomain: it.subdomain,
+              customDomains: it.custom_domains?.split(','),
+              hostHeaderRewrite: it.host_header_rewrite,
+              plugin:
+                it.plugin === 'http_proxy'
+                  ? {
+                      type: 'http_proxy',
+                      httpUser: it.plugin_http_user,
+                      httpPassword: it.plugin_http_passwd
+                    }
+                  : it.plugin === 'socks5'
+                  ? {
+                      type: 'socks5',
+                      username: it.plugin_user,
+                      password: it.plugin_passwd
+                    }
+                  : it.plugin === 'static_file'
+                  ? {
+                      type: 'static_file',
+                      localPath: it.plugin_local_path,
+                      stripPrefix: it.plugin_strip_prefix,
+                      httpUser: it.plugin_http_user,
+                      httpPassword: it.plugin_http_passwd
+                    }
+                  : it.plugin === 'unix_domain_socket'
+                  ? {
+                      type: 'unix_domain_socket',
+                      unixPath: it.plugin_unix_path
+                    }
+                  : it.plugin === 'http2https'
+                  ? {
+                      type: 'http2https',
+                      localAddr: it.plugin_local_addr,
+                      hostHeaderRewrite: it.plugin_host_header_rewrite
+                      // requestHeaders: {}
+                    }
+                  : it.plugin === 'https2http' || it.plugin === 'https2https'
+                  ? {
+                      type: it.plugin as 'https2http',
+                      localAddr: it.plugin_local_addr,
+                      hostHeaderRewrite: it.plugin_host_header_rewrite,
+                      crtPath: it.plugin_crt_path,
+                      keyPath: it.plugin_key_path
+                      // requestHeaders: {}
+                    }
+                  : void 0
+            })) ?? []
         };
         await this.saveConfig(this.config);
         // utools.dbStorage.removeItem('config');
@@ -145,10 +148,11 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     await fs.writeFile(
       this.configPath,
       JSON.stringify(
-        {
-          ...json,
-          proxies: json.proxies.filter(it => it._enable).map(({ _enable: _, ...other }) => ({ ...other }))
-        },
+        json,
+        // {
+        //   ...json,
+        //   proxies: json.proxies.filter(it => it._enable).map(({ _enable: _, ...other }) => ({ ...other }))
+        // }
         void 0,
         2
       )
@@ -174,6 +178,8 @@ export class Frpc extends EventEmitter<FrpcEvent> {
       this.emit('log', `Frpc Exit code: ${code}, signal: ${signal}`);
       this.emit('exit');
     });
+
+    this.emit('start');
 
     if (!this.process.pid) {
       this.process = null;

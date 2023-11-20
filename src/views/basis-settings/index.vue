@@ -1,18 +1,18 @@
 <template>
-  <el-form class="basis-settings" label-position="right" label-width="100px" :model="config" ref="form">
-    <div class="basis-settings__group">
-      <el-form-item label="服务器" required prop="serverAddr">
+  <el-form class="h-full overflow-y-auto p-3" label-position="right" label-width="100px" :model="config" ref="form">
+    <div class="flex">
+      <el-form-item class="flex-1" label="服务器" required prop="serverAddr">
         <el-input v-model="config.serverAddr" />
       </el-form-item>
-      <el-form-item label="端口" required prop="serverPort">
+      <el-form-item class="flex-1" label="端口" required prop="serverPort">
         <el-input-number v-model="config.serverPort" :min="0" :max="65535" placeholder="7000" />
       </el-form-item>
     </div>
-    <div class="basis-settings__group">
-      <el-form-item label="用户名" prop="user">
+    <div class="flex">
+      <el-form-item class="flex-1" label="用户名" prop="user">
         <el-input v-model="config.user" />
       </el-form-item>
-      <el-form-item label="令牌" prop="auth.token">
+      <el-form-item class="flex-1" label="令牌" prop="auth.token">
         <el-input v-model="config.auth.token" placeholder="token" type="password" show-password />
       </el-form-item>
     </div>
@@ -37,22 +37,7 @@
   </el-form>
 </template>
 
-<style lang="scss" scoped>
-.basis-settings {
-  height: 100%;
-  overflow-y: auto;
-  padding: 10px;
-
-  &__group {
-    display: flex;
-    flex-wrap: wrap;
-    padding-right: 20px;
-    .el-form-item {
-      width: 50%;
-    }
-  }
-}
-</style>
+<style lang="scss" scoped></style>
 
 <script lang="ts" setup>
 import { ref } from 'vue';

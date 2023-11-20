@@ -1,5 +1,5 @@
 <template>
-  <el-form class="p-3 h-full overflow-y-auto" label-position="right" label-width="100px" :model="config" ref="form">
+  <el-form class="h-full overflow-y-auto p-3" label-position="right" label-width="100px" :model="config" ref="form">
     <el-form-item label="DNS" prop="dnsServer">
       <el-input v-model="config.dnsServer" placeholder="114.114.114.114" />
     </el-form-item>

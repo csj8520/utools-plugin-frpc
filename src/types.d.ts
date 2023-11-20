@@ -22,7 +22,7 @@ interface FrpcConfig {
   /** 第一次登陆失败后是否退出，默认为 true。 */
   loginFailExit?: boolean;
   // /** 指定启用部分代理，当配置了较多代理，但是只希望启用其中部分时可以通过此参数指定，默认为全部启用。 */
-  // start?: string[];
+  start?: string[];
   // /** 日志配置。 */
   log: LogConfig;
   // /** 客户端 AdminServer 配置。 */
@@ -148,8 +148,8 @@ interface ProxyBaseConfig extends ProxyBackend {
   /** 健康检查配置。 */
   healthCheck?: HealthCheckConfig;
 
-  /** 是否开启 */
-  _enable?: boolean;
+  // /** 是否开启 */
+  // _enable?: boolean;
 }
 
 /** 代理后端服务配置。 */
