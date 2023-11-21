@@ -26,7 +26,7 @@
       <template #="{ row }: Scope">
         <el-switch
           size="large"
-          :model-value="config.start?.includes(row.name)"
+          :model-value="!config.start?.length || config.start?.includes(row.name)"
           inline-prompt
           active-text="开"
           inactive-text="关"
@@ -120,11 +120,14 @@ async function hanldeDel(idx: number) {
 }
 
 function handleEnable(row: FrpcConfig.Proxie) {
-  config.value.start ||= [];
-  const idx = config.value.start.indexOf(row.name);
-  idx > -1 ? config.value.start.splice(idx, 1) : config.value.start.push(row.name);
-  // 空字符串占位
-  if (config.value.start.length === 0) config.value.start.push('');
+  const start = config.value.proxies
+    .filter(it => {
+      const enable = !config.value.start?.length || config.value.start.includes(it.name);
+      return it.name === row.name ? !enable : enable;
+    })
+    .map(it => it.name);
+
+  config.value.start = start.length ? (start.length === config.value.proxies.length ? [] : start) : [''];
   console.log('config.value.start: ', config.value.start);
 }
 </script>

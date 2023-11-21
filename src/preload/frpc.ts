@@ -53,6 +53,7 @@ export class Frpc extends EventEmitter<FrpcEvent> {
       const oldData = utools.dbStorage.getItem(OLD_CONFIG_KEY);
       console.log('oldData: ', oldData);
       if (oldData) {
+        const start = (oldData.proxys as any[] | void)?.filter(it => it._enable).map(it => it._name);
         this.config = {
           serverAddr: oldData.common.server_addr,
           serverPort: oldData.common.server_port,
@@ -73,11 +74,10 @@ export class Frpc extends EventEmitter<FrpcEvent> {
             password: oldData.common.admin_pwd
           },
           _custom: { ...oldData.custom },
-          start: (oldData.proxys as any[])?.filter(it => it._enable).map(it => it._name),
+          start: start?.length ? start : [''],
           proxies:
-            (oldData.proxys as any[])?.map(it => ({
+            (oldData.proxys as any[] | void)?.map(it => ({
               name: it._name,
-              // _enable: it._enable,
               type: it.type,
               transport: { useCompression: it.use_compression, useEncryption: it.use_encryption },
               localIP: it.local_ip || it.bind_addr,
@@ -132,6 +132,7 @@ export class Frpc extends EventEmitter<FrpcEvent> {
             })) ?? []
         };
         await this.saveConfig(this.config);
+        // TODO: enable
         // utools.dbStorage.removeItem(OLD_CONFIG_KEY);
       } else {
         const stat = await fs.stat(this.configPath).catch(() => null);
@@ -148,18 +149,7 @@ export class Frpc extends EventEmitter<FrpcEvent> {
   public async saveConfig(json: FrpcConfig) {
     // 保存配置到 utools，同时写入到 json
     utools.dbStorage.setItem(CONFIG_KEY, json);
-    await fs.writeFile(
-      this.configPath,
-      JSON.stringify(
-        json,
-        // {
-        //   ...json,
-        //   proxies: json.proxies.filter(it => it._enable).map(({ _enable: _, ...other }) => ({ ...other }))
-        // }
-        void 0,
-        2
-      )
-    );
+    await fs.writeFile(this.configPath, JSON.stringify(json, void 0, 2));
     this.config = json;
   }
 

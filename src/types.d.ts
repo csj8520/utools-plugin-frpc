@@ -21,13 +21,13 @@ interface FrpcConfig {
   dnsServer?: string;
   /** 第一次登陆失败后是否退出，默认为 true。 */
   loginFailExit?: boolean;
-  // /** 指定启用部分代理，当配置了较多代理，但是只希望启用其中部分时可以通过此参数指定，默认为全部启用。 */
+  /** 指定启用部分代理，当配置了较多代理，但是只希望启用其中部分时可以通过此参数指定，默认为全部启用。 */
   start?: string[];
-  // /** 日志配置。 */
+  /** 日志配置。 */
   log: LogConfig;
-  // /** 客户端 AdminServer 配置。 */
+  /** 客户端 AdminServer 配置。 */
   webServer?: WebServerConfig;
-  // /** 客户端网络层配置。 */
+  /** 客户端网络层配置。 */
   transport: ClientTransportConfig;
   // /** 代理 UDP 服务时支持的最大包长度，默认为 1500，服务端和客户端需要保持配置一致。 */
   // udpPacketSize?: number;
@@ -147,9 +147,6 @@ interface ProxyBaseConfig extends ProxyBackend {
   loadBalancer?: LoadBalancerConfig;
   /** 健康检查配置。 */
   healthCheck?: HealthCheckConfig;
-
-  // /** 是否开启 */
-  // _enable?: boolean;
 }
 
 /** 代理后端服务配置。 */
