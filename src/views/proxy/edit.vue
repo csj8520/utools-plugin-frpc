@@ -29,7 +29,7 @@
       <el-form-item label="本地IP" prop="localIP">
         <el-input v-model="result.localIP" placeholder="被代理的本地服务 IP，默认为 127.0.0.1。" />
       </el-form-item>
-      <el-form-item label="本地端口" prop="localPort" :required="!enablePlugin">
+      <el-form-item label="本地端口" prop="localPort" :required="!enablePlugin" title="被代理的本地服务端口。">
         <el-input-number v-model="result.localPort" :min="0" :max="65535" placeholder="8080" />
       </el-form-item>
 
@@ -61,8 +61,8 @@
       </el-form-item>
 
       <template v-if="result.type === 'tcp' || result.type === 'udp'">
-        <el-form-item label="远程端口" prop="remotePort" required>
-          <el-input v-model="result.remotePort" placeholder="服务端绑定的端口，用户访问服务端此端口的流量会被转发到对应的本地服务。" />
+        <el-form-item label="远程端口" prop="remotePort" required title="服务端绑定的端口，用户访问服务端此端口的流量会被转发到对应的本地服务。">
+          <el-input-number v-model="result.remotePort" :min="0" :max="65535" placeholder="8080" />
         </el-form-item>
       </template>
 
