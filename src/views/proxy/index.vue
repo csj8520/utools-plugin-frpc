@@ -78,7 +78,7 @@ function handleFormatRemoteUrl(row: FrpcConfig.Proxie) {
 const remoteUrls = computed(() => config.value.proxies.map(it => handleFormatRemoteUrl(it)));
 
 function handleFormatLocalUrl(row: FrpcConfig.Proxie) {
-  if (!row.plugin) return `${row.localIP}:${row.localPort}`;
+  if (!row.plugin) return `${row.localIP || '127.0.0.1'}:${row.localPort}`;
   if (row.plugin.type === 'http2https') return row.plugin.localAddr;
   if (row.plugin.type === 'https2http') return row.plugin.localAddr;
   if (row.plugin.type === 'https2https') return row.plugin.localAddr;
