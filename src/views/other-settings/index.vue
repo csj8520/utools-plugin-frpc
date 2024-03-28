@@ -47,8 +47,8 @@
         <el-icon><QuestionFilled /></el-icon>
       </el-tooltip>
     </el-form-item>
-    <el-form-item label="保存后重启" prop="_custom.saveRestart">
-      <el-checkbox v-model="config._custom.saveRestart" />
+    <el-form-item label="保存后重启">
+      <el-checkbox v-model="customConfig.saveRestart" />
     </el-form-item>
   </el-form>
 </template>
@@ -58,7 +58,7 @@ import { computed, ref } from 'vue';
 import { QuestionFilled } from '@element-plus/icons-vue';
 import type { FormInstance, CheckboxValueType } from 'element-plus';
 
-import { config } from '../../config';
+import { config, customConfig } from '../../config';
 const { utools } = window;
 
 const form = ref<FormInstance>(null!);

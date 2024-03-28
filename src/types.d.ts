@@ -6,6 +6,10 @@ type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };
 
+interface CustomConfig {
+  saveRestart: boolean;
+}
+
 interface FrpcConfig {
   /** 客户端鉴权配置。 */
   auth: AuthClientConfig;
@@ -39,7 +43,8 @@ interface FrpcConfig {
   /** 代理配置，不同的代理类型对应不同的配置，例如 TCPProxyConfig 或 HTTPProxyConfig。 */
   proxies: FrpcConfig.Proxie[];
 
-  _custom: {
+  /** @deprecated */
+  _custom?: {
     saveRestart?: boolean;
   };
 }

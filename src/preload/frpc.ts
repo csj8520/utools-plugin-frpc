@@ -12,6 +12,7 @@ type FrpcEvent = {
 
 const CONFIG_KEY = 'config-json';
 const OLD_CONFIG_KEY = 'config';
+const CUSTOM_CONFIG_KEY = 'custom-config';
 
 export class Frpc extends EventEmitter<FrpcEvent> {
   public process: ChildProcessWithoutNullStreams | null = null;
@@ -20,6 +21,7 @@ export class Frpc extends EventEmitter<FrpcEvent> {
   public version: string = '0.0.0';
   public hasFrpcBinFile: boolean = false;
   public config: FrpcConfig = this.defConfig;
+  public customConfig: CustomConfig = this.defCustomConfig;
 
   public get isRuning() {
     if (!this.process) return false;
@@ -27,7 +29,11 @@ export class Frpc extends EventEmitter<FrpcEvent> {
   }
 
   public get defConfig(): FrpcConfig {
-    return { auth: {}, log: {}, transport: {}, proxies: [], _custom: {} };
+    return { auth: {}, log: {}, transport: {}, proxies: [] };
+  }
+
+  public get defCustomConfig(): CustomConfig {
+    return { saveRestart: false };
   }
 
   constructor(op: { configPath: string; frpcBinPath: string }) {
@@ -44,106 +50,15 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     }
 
     // 读取 db 数据，若无数据则读取 json 配置
-    const data = utools.dbStorage.getItem(CONFIG_KEY);
-    if (data) {
-      this.config = data as FrpcConfig;
-      await this.saveConfig(this.config);
+    const data: FrpcConfig = utools.dbStorage.getItem(CONFIG_KEY) || this.defConfig;
+    // fix: config error
+    if (data._custom) {
+      this.saveCustomConfig({ ...this.defCustomConfig, saveRestart: data._custom.saveRestart || false });
+      delete data._custom;
     } else {
-      // 兼容旧数据
-      const oldData = utools.dbStorage.getItem(OLD_CONFIG_KEY);
-      console.log('oldData: ', oldData);
-      if (oldData) {
-        const start = (oldData.proxys as any[] | void)?.filter(it => it._enable).map(it => it._name);
-        this.config = {
-          serverAddr: oldData.common.server_addr,
-          serverPort: oldData.common.server_port,
-          user: oldData.common.user,
-          loginFailExit: oldData.common.login_fail_exit,
-          dnsServer: oldData.common.dns_server,
-          auth: { token: oldData.common.token },
-          log: { level: oldData.common.log_level },
-          transport: {
-            protocol: oldData.common.protocol,
-            proxyURL: oldData.common.http_proxy,
-            poolCount: oldData.common.pool_count
-          },
-          webServer: oldData.common.admin_port && {
-            addr: oldData.common.admin_addr,
-            port: oldData.common.admin_port,
-            user: oldData.common.admin_user,
-            password: oldData.common.admin_pwd
-          },
-          _custom: { ...oldData.custom },
-          start: start?.length ? start : [''],
-          proxies:
-            (oldData.proxys as any[] | void)?.map(it => ({
-              name: it._name,
-              type: it.type,
-              transport: { useCompression: it.use_compression, useEncryption: it.use_encryption },
-              localIP: it.local_ip || it.bind_addr,
-              localPort: it.local_port || it.bind_port,
-              remotePort: it.remote_port,
-              subdomain: it.subdomain,
-              customDomains: it.custom_domains?.split(','),
-              hostHeaderRewrite: it.host_header_rewrite,
-              plugin:
-                it.plugin === 'http_proxy'
-                  ? {
-                      type: 'http_proxy',
-                      httpUser: it.plugin_http_user,
-                      httpPassword: it.plugin_http_passwd
-                    }
-                  : it.plugin === 'socks5'
-                  ? {
-                      type: 'socks5',
-                      username: it.plugin_user,
-                      password: it.plugin_passwd
-                    }
-                  : it.plugin === 'static_file'
-                  ? {
-                      type: 'static_file',
-                      localPath: it.plugin_local_path,
-                      stripPrefix: it.plugin_strip_prefix,
-                      httpUser: it.plugin_http_user,
-                      httpPassword: it.plugin_http_passwd
-                    }
-                  : it.plugin === 'unix_domain_socket'
-                  ? {
-                      type: 'unix_domain_socket',
-                      unixPath: it.plugin_unix_path
-                    }
-                  : it.plugin === 'http2https'
-                  ? {
-                      type: 'http2https',
-                      localAddr: it.plugin_local_addr,
-                      hostHeaderRewrite: it.plugin_host_header_rewrite
-                      // requestHeaders: {}
-                    }
-                  : it.plugin === 'https2http' || it.plugin === 'https2https'
-                  ? {
-                      type: it.plugin as 'https2http',
-                      localAddr: it.plugin_local_addr,
-                      hostHeaderRewrite: it.plugin_host_header_rewrite,
-                      crtPath: it.plugin_crt_path,
-                      keyPath: it.plugin_key_path
-                      // requestHeaders: {}
-                    }
-                  : void 0
-            })) ?? []
-        };
-        await this.saveConfig(this.config);
-        // TODO: enable
-        // utools.dbStorage.removeItem(OLD_CONFIG_KEY);
-      } else {
-        const stat = await fs.stat(this.configPath).catch(() => null);
-        if (!stat?.isFile()) {
-          this.config = this.defConfig;
-        } else {
-          const file = await fs.readFile(this.configPath);
-          this.config = { ...this.defConfig, ...JSON.parse(file.toString()) };
-        }
-      }
+      this.customConfig = utools.dbStorage.getItem(CUSTOM_CONFIG_KEY) || this.defCustomConfig;
     }
+    await this.saveConfig(data);
   }
 
   public async saveConfig(json: FrpcConfig) {
@@ -151,6 +66,11 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     utools.dbStorage.setItem(CONFIG_KEY, json);
     await fs.writeFile(this.configPath, JSON.stringify(json, void 0, 2));
     this.config = json;
+  }
+
+  public async saveCustomConfig(json: CustomConfig) {
+    utools.dbStorage.setItem(CUSTOM_CONFIG_KEY, json);
+    this.customConfig = json;
   }
 
   public async saveFrpcBinFile(buf: ArrayBuffer) {

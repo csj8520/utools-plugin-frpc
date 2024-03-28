@@ -82,7 +82,7 @@ import { useDark } from '@vueuse/core';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { isEqual, cloneDeep } from 'lodash';
 import ansicolor, { AnsiColored } from 'ansicolor';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import TabBasisSettings from './views/basis-settings/index.vue';
 import TabOtherSettings from './views/other-settings/index.vue';
@@ -91,7 +91,7 @@ import TabLog from './views/log/index.vue';
 
 import Download from './components/download.vue';
 
-import { config } from './config';
+import { config, customConfig } from './config';
 
 useDark();
 const { frpc } = window.preload;
@@ -131,7 +131,7 @@ async function handleSave() {
   await frpc.saveConfig(_config);
   originConfig.value = _config;
   if (!frpc.isRuning) return;
-  if (!config.value._custom.saveRestart) return ElMessage.info('保存成功，可手动重启以生效');
+  if (!customConfig.value.saveRestart) return ElMessage.info('保存成功，可手动重启以生效');
   await frpc.exit();
   await handleRun();
   ElMessage.success('保存并重启成功');
@@ -170,6 +170,7 @@ async function initFrpc() {
 
   originConfig.value = frpc.config;
   config.value = cloneDeep(frpc.config);
+  customConfig.value = frpc.customConfig;
   console.log('config.value: ', config.value);
 
   frpc.removeAllListeners();
@@ -180,6 +181,9 @@ async function initFrpc() {
   frpc.on('error', ElMessage.error);
 }
 
+watch(customConfig, () => {
+  frpc.saveCustomConfig(cloneDeep(customConfig.value));
+});
 // for dev
 window.addEventListener('beforeunload', () => {
   frpc.isRuning && frpc.exit();
