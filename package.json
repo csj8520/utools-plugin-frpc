@@ -1,6 +1,6 @@
 {
   "name": "utools-plugin-frpc",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "utools 插件 frpc 客户端，可视化操作",
   "scripts": {
     "start": "vite",
@@ -22,7 +22,7 @@
     "unplugin-vue-components": "^0.26.0",
     "utools-api-types": "^4.0.0",
     "vite": "^5.2.6",
-    "vite-plugin-utools-helper": "^0.0.5",
+    "vite-plugin-utools-helper": "^0.0.6",
     "vue-tsc": "^2.0.7"
   },
   "dependencies": {

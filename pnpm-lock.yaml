@@ -77,8 +77,8 @@ devDependencies:
     specifier: ^5.2.6
     version: 5.2.6(@types/node@20.11.30)(sass@1.72.0)
   vite-plugin-utools-helper:
-    specifier: ^0.0.5
-    version: 0.0.5(vite@5.2.6)
+    specifier: ^0.0.6
+    version: 0.0.6(vite@5.2.6)
   vue-tsc:
     specifier: ^2.0.7
     version: 2.0.7(typescript@5.4.3)
@@ -2441,8 +2441,8 @@ packages:
     resolution: {integrity: sha512-YFY5jTDBzYdWV3CwkOf2pzbEcw3YLHvCJws+rejND1IWdWgWkXLP600hTUlMB5ordfSb4KiUkpcK8ReerHif0g==}
     dev: true
 
-  /vite-plugin-utools-helper@0.0.5(vite@5.2.6):
-    resolution: {integrity: sha512-1rZTEZz+0D+Q5UV/3xeI05AapCoEply4CGmWOTfiguleO5APsj4Nyxz18WYwKNuW9sh6HrUzyXCIZ29+bdRIYA==}
+  /vite-plugin-utools-helper@0.0.6(vite@5.2.6):
+    resolution: {integrity: sha512-2NQcfRGOv1KzkQXFyrHIcYbcMfJ941bcrtDgjQYIYt/2nujbL00EmjeTxywawaPrAXH1/occVr4IMMSw6VvHTA==}
     peerDependencies:
       vite: ^3.0.0 || ^4.0.0 || ^5.0.0
     dependencies:
