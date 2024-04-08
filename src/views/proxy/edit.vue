@@ -192,7 +192,7 @@ const result = ref<FrpcConfig.Proxie>(null!);
 
 const props = withDefaults(defineProps<{ modelValue?: boolean; data?: FrpcConfig.Proxie }>(), {
   modelValue: false,
-  data: () => ({ type: 'http', name: '', _enable: true, transport: { useCompression: true, useEncryption: true } })
+  data: () => ({ type: 'http', name: '', transport: { useCompression: true, useEncryption: true } })
 });
 const emit = defineEmits(['update:modelValue', 'enter']);
 

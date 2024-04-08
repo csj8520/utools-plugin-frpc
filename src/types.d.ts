@@ -152,6 +152,9 @@ interface ProxyBaseConfig extends ProxyBackend {
   loadBalancer?: LoadBalancerConfig;
   /** 健康检查配置。 */
   healthCheck?: HealthCheckConfig;
+
+  /** @deprecated */
+  _enable?: boolean;
 }
 
 /** 代理后端服务配置。 */

@@ -52,6 +52,10 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     // 读取 db 数据，若无数据则读取 json 配置
     const data: FrpcConfig = utools.dbStorage.getItem(CONFIG_KEY) || this.defConfig;
     // fix: config error
+
+    if (data.proxies.some(it => '_enable' in it)) {
+      data.proxies.forEach(it => delete it._enable);
+    }
     if (data._custom) {
       this.saveCustomConfig({ ...this.defCustomConfig, saveRestart: data._custom.saveRestart || false });
       delete data._custom;
