@@ -73,7 +73,7 @@ watch(
       searchIng.value = false;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 async function handleDownload() {
@@ -87,11 +87,11 @@ async function handleDownload() {
             'a',
             {
               href: 'javascript:void(0)',
-              onClick: () => utools.shellOpenExternal('https://github.com/fatedier/frp/issues/1204')
+              onClick: () => utools.shellOpenExternal('https://github.com/fatedier/frp/issues/1204'),
             },
-            '查看详情'
-          )
-        ])
+            '查看详情',
+          ),
+        ]),
       );
     }
 
@@ -103,7 +103,7 @@ async function handleDownload() {
     const { status, data } = await axios.get<ArrayBuffer>(latest.value!.currentAssets!.browser_download_url, {
       cancelToken: cancelTokens.value.token,
       responseType: 'arraybuffer',
-      onDownloadProgress: p => p.total && (downloadProgress.value = Math.floor((p.loaded / p.total) * 90))
+      onDownloadProgress: p => p.total && (downloadProgress.value = Math.floor((p.loaded / p.total) * 90)),
     });
 
     cancelTokens.value = void 0;
@@ -129,7 +129,7 @@ async function handleDownload() {
     }
     downloadProgress.value = 98;
     if (file) {
-      await frpc.saveFrpcBinFile(file.buffer);
+      await frpc.saveFrpcBinFile(file.buffer as ArrayBuffer);
       downloadProgress.value = 100;
       ElMessage.success('下载成功');
       emit('update:modelValue', false);

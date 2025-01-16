@@ -1,6 +1,6 @@
 import os from 'os';
 import path from 'path';
-import fs from 'fs/promises';
+import fs from 'fs';
 
 import { Frpc } from './frpc';
 
@@ -14,10 +14,9 @@ console.log('frpcBinPath: ', frpcBinPath);
 const configPath = path.join(baseDir, 'frpc.json');
 console.log('configPath: ', configPath);
 
-utools.onPluginEnter(async () => {
-  const stat = await fs.stat(baseDir).catch(() => null);
-  if (!stat?.isDirectory()) await fs.mkdir(baseDir, { recursive: true });
-});
+const stat = fs.statSync(baseDir, { throwIfNoEntry: false });
+if (!stat?.isDirectory()) fs.mkdirSync(baseDir, { recursive: true });
+// utools.onPluginEnter(async () => {});
 
 utools.onPluginOut(async exit => {
   if (!exit) return;
