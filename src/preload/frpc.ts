@@ -33,7 +33,7 @@ export class Frpc extends EventEmitter<FrpcEvent> {
   }
 
   public get defCustomConfig(): CustomConfig {
-    return { saveRestart: false };
+    return { saveRestart: true };
   }
 
   constructor(op: { configPath: string; frpcBinPath: string }) {
@@ -92,7 +92,8 @@ export class Frpc extends EventEmitter<FrpcEvent> {
     this.process.on('error', err => this.emit('error', err.message));
     this.process.on('exit', (code, signal) => {
       this.process = null;
-      this.emit('log', `Frpc Exit code: ${code}, signal: ${signal}`);
+      if ((code ?? 0) === 0) this.emit('log', `Frpc Exit code: ${code}, signal: ${signal}`);
+      else this.emit('error', `Frpc 异常退出 code: ${code}, signal: ${signal}, 请检查配置！`);
       this.emit('exit');
     });
 

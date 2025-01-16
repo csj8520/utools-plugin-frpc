@@ -39,8 +39,6 @@
   :deep(.el-tabs) {
     flex: 1;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
     .el-tabs__header {
       flex-shrink: 0;
       margin: 0;
@@ -149,7 +147,7 @@ async function checkVersion() {
     await ElMessageBox.confirm('frp 现在支持 TOML、YAML 和 JSON 进行配置。INI 已弃用，需更新 frpc 客户端', '版本过低', {
       showCancelButton: false,
       showClose: false,
-      closeOnClickModal: false
+      closeOnClickModal: false,
     });
     showDownload.value = true;
     return false;

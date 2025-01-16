@@ -30,7 +30,7 @@
           inline-prompt
           active-text="开"
           inactive-text="关"
-          @change="handleEnable(row)"
+          @change="handleSwitch(row)"
         />
       </template>
     </el-table-column>
@@ -64,7 +64,7 @@ const editIndex = ref<number>(-1);
 function handleFormatRemoteUrl(row: FrpcConfig.Proxie) {
   if (row.type === 'http' || row.type === 'https' || row.type === 'tcpmux') {
     const urls: string[] = [];
-    const path = row.plugin?.type === 'static_file' ? `/${row.plugin.stripPrefix}/` : '';
+    const path = row.plugin?.type === 'static_file' && row.plugin.stripPrefix ? `/${row.plugin.stripPrefix}/` : '';
     if (row.customDomains) urls.push(...row.customDomains.map(it => `${row.type}://${it}${path}`));
     if (row.subdomain) urls.push(`${row.type}://${row.subdomain}.${config.value.serverAddr ?? '-'}${path}`);
     return urls.length ? urls.join(', ') : '-';
@@ -101,7 +101,8 @@ async function handleSaveEdit(_config: FrpcConfig.Proxie) {
 
   if (editIndex.value === config.value.proxies.length) {
     config.value.proxies.push(_config);
-    handleEnable(_config);
+    console.log('_config: ', _config);
+    handleSwitch(_config, true);
   } else {
     config.value.proxies[editIndex.value] = _config;
   }
@@ -115,15 +116,15 @@ function handldAdd() {
 async function hanldeDel(idx: number) {
   const res = await ElMessageBox.confirm('确定要删除吗').catch(e => e);
   if (res === 'cancel') return;
-  if (config.value.start?.includes(config.value.proxies[idx].name)) handleEnable(config.value.proxies[idx]);
+  if (config.value.start?.includes(config.value.proxies[idx].name)) handleSwitch(config.value.proxies[idx]);
   config.value.proxies.splice(idx, 1);
 }
 
-function handleEnable(row: FrpcConfig.Proxie) {
+function handleSwitch(row: FrpcConfig.Proxie, open?: boolean) {
   const start = config.value.proxies
     .filter(it => {
       const enable = !config.value.start?.length || config.value.start.includes(it.name);
-      return it.name === row.name ? !enable : enable;
+      return it.name === row.name ? open || !enable : enable;
     })
     .map(it => it.name);
 
