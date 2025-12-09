@@ -10,76 +10,128 @@ interface CustomConfig {
   saveRestart: boolean;
 }
 
+// gen from openai https://chatgpt.com/c/ae97de97-f9f6-4c1b-b662-c1d0f564c779
+
+/** FRPC 客户端主配置 */
 interface FrpcConfig {
-  /** 客户端鉴权配置。 */
-  auth: AuthClientConfig;
-  /** 用户名，设置此参数后，代理名称会被修改为 {user}.{proxyName}，避免代理名称和其他用户冲突。 */
+  /** 客户端鉴权配置 */
+  auth?: AuthClientConfig;
+
+  /** 用户名，最终代理名会变为 {user}.{proxyName} */
   user?: string;
-  /** 连接服务端的地址。 */
+
+  /** 服务端地址 */
   serverAddr?: string;
-  /** 连接服务端的端口，默认为 7000。 */
+
+  /** 服务端端口，默认 7000 */
   serverPort?: number;
-  /** xtcp 打洞所需的 stun 服务器地址，默认为 stun.easyvoip.com:3478。 */
+
+  /** xtcp 打洞使用的 STUN 服务地址 */
   natHoleStunServer?: string;
-  /** 使用 DNS 服务器地址，默认使用系统配置的 DNS 服务器，指定此参数可以强制替换为自定义的 DNS 服务器地址。 */
+
+  /** 自定义 DNS 服务器地址 */
   dnsServer?: string;
-  /** 第一次登陆失败后是否退出，默认为 true。 */
+
+  /** 首次登录失败是否退出，默认 true */
   loginFailExit?: boolean;
-  /** 指定启用部分代理，当配置了较多代理，但是只希望启用其中部分时可以通过此参数指定，默认为全部启用。 */
+
+  /** 指定启用的代理名称列表 */
   start?: string[];
-  /** 日志配置。 */
-  log: LogConfig;
-  /** 客户端 AdminServer 配置。 */
+
+  /** 日志配置 */
+  log?: LogConfig;
+
+  /** Admin WebServer 配置 */
   webServer?: WebServerConfig;
-  /** 客户端网络层配置。 */
-  transport: ClientTransportConfig;
-  // /** 代理 UDP 服务时支持的最大包长度，默认为 1500，服务端和客户端需要保持配置一致。 */
-  // udpPacketSize?: number;
-  // /** 附加元数据，会传递给服务端插件，提供附加能力。 */
-  // metadatas?: Record<string, string>;
-  // /** 指定额外的配置文件目录，其中的 proxy 和 visitor 配置会被读取加载。 */
-  // includes?: string[];
 
-  /** 代理配置，不同的代理类型对应不同的配置，例如 TCPProxyConfig 或 HTTPProxyConfig。 */
-  proxies: FrpcConfig.Proxie[];
+  /** 网络层配置 */
+  transport?: ClientTransportConfig;
 
-  /** @deprecated */
-  _custom?: {
-    saveRestart?: boolean;
-  };
+  /** 虚拟网络配置（Alpha） */
+  virtualNet?: VirtualNetConfig;
+
+  /** 特性开关 */
+  featureGates?: Record<string, boolean>;
+
+  /** UDP 最大包长，默认 1500 */
+  udpPacketSize?: number;
+
+  /** 附加元信息，传递给服务端插件 */
+  metadatas?: Record<string, string>;
+
+  /** 额外的配置文件目录 */
+  includes?: string[];
+
+  /** 代理配置列表（可选） */
+  proxies?: ProxyConfig[];
+
+  /** 访问者配置列表（可选） */
+  visitors?: VisitorConfig[];
 }
 
-namespace FrpcConfig {
-  type Proxie =
-    | TCPProxyConfig
-    | UDPProxyConfig
-    | HTTPProxyConfig
-    | HTTPSProxyConfig
-    | TCPMuxProxyConfig
-    | STCPProxyConfig
-    | XTCPProxyConfig
-    | SUDPProxyConfig;
-}
+type ProxyConfig =
+  | TCPProxyConfig
+  | UDPProxyConfig
+  | HTTPProxyConfig
+  | HTTPSProxyConfig
+  | TCPMuxProxyConfig
+  | STCPProxyConfig
+  | XTCPProxyConfig
+  | SUDPProxyConfig;
 
+type VisitorConfig = STCPVisitorConfig | SUDPVisitorConfig | XTCPVisitorConfig;
+/** 客户端鉴权配置 */
 interface AuthClientConfig {
-  /** 鉴权方式，可选值为 token 或 oidc，默认为 token。 */
+  /** 鉴权方式，可选 token/oidc */
   method?: 'token' | 'oidc';
-  /** 鉴权信息附加范围，可选值为 HeartBeats 和 NewWorkConns */
-  additionalScopes?: ('HeartBeats' | 'NewWorkConns')[];
-  /** 在 method 为 token 时生效，客户端需要设置一样的值才能鉴权通过。 */
+
+  /** 鉴权额外范围，可选 HeartBeats、NewWorkConns */
+  additionalScopes?: string[];
+
+  /** token 鉴权时使用 */
   token?: string;
-  /** oidc 鉴权配置。 */
+
+  /** 从文件加载 token 的配置，与 token 互斥 */
+  tokenSource?: ValueSource;
+
+  /** OIDC 鉴权配置 */
   oidc?: AuthOIDCClientConfig;
 }
 
-/** oidc 鉴权配置。 */
+/** OIDC 鉴权配置 */
 interface AuthOIDCClientConfig {
+  /** OIDC 客户端 ID */
   clientID?: string;
+
+  /** OIDC 客户端密钥 */
   clientSecret?: string;
+
+  /** OIDC audience 参数 */
   audience?: string;
+
+  /** OIDC scope 参数 */
   scope?: string;
+
+  /** OIDC 令牌端点 URL */
   tokenEndpointURL?: string;
+
+  /** 附加的端点参数 */
   additionalEndpointParams?: Record<string, string>;
+
+  /** 信任的 CA 证书文件路径 */
+  trustedCaFile?: string;
+
+  /** 跳过 TLS 证书验证 */
+  insecureSkipVerify?: boolean;
+
+  /** 访问 OIDC 令牌端点使用的代理 URL */
+  proxyURL?: string;
+}
+
+/** 虚拟网络配置 */
+interface VirtualNetConfig {
+  /** 虚拟网络接口的 IP 地址和网段（CIDR 格式，例如 "100.86.0.1/24"） */
+  address: string;
 }
 
 /** 客户端网络层配置。 */
@@ -110,60 +162,111 @@ interface ClientTransportConfig {
   tls?: TLSClientConfig;
 }
 
+/** 日志配置 */
 interface LogConfig {
-  /** 日志输出文件路径，如果为 console，则会将日志打印在标准输出中。 */
+  /** 日志输出路径，为 console 时输出到标准输出 */
   to?: string;
-  /** 日志级别，可选值为 trace, debug, info, warn, error，默认级别为 info。 */
+  /** 日志级别，可选 trace/debug/info/warn/error，默认 info */
   level?: 'trace' | 'debug' | 'info' | 'warn' | 'error';
-  /** 日志文件最多保留天数，默认为 3 天。 */
+  /** 日志文件保留天数，默认 3 天 */
   maxDays?: number;
-  /** 禁用标准输出中的日志颜色。 */
+  /** 禁用控制台日志颜色 */
   disablePrintColor?: boolean;
 }
 
+/** Admin WebServer 配置 */
 interface WebServerConfig {
-  /** webServer 监听地址，默认为 127.0.0.1。 */
+  /** 监听地址，默认 127.0.0.1 */
   addr?: string;
-  /** webServer 监听端口。 */
+  /** 监听端口 */
   port: number;
-  /** HTTP BasicAuth 用户名。 */
+  /** BasicAuth 用户名 */
   user?: string;
-  /** HTTP BasicAuth 密码。 */
+  /** BasicAuth 密码 */
   password?: string;
-  /** 静态资源目录，Dashboard 使用的资源默认打包在二进制文件中，通过指定此参数使用自定义的静态资源。 */
+  /** 自定义静态资源目录 */
   assetsDir?: string;
-  /** 启动 Go HTTP pprof，用于应用调试。 */
+  /** 启用 pprof 调试 */
   pprofEnable?: boolean;
-  /** Dashboard 启用 HTTPS 的 TLS 相关配置。 */
+  /** TLS 配置 */
   tls?: TLSConfig;
 }
 
-/** 基础代理配置 */
-interface ProxyBaseConfig extends ProxyBackend {
-  /** 代理名称。 */
-  name: string;
-  /** 代理类型，可选值为 tcp, udp, http, https, tcpmux, stcp, sudp, xtcp。 */
-  // type: string;
-  /** 代理网络层配置。 */
-  transport?: ProxyTransport;
-  /** 附加元数据，会传递给服务端插件，提供附加能力。 */
-  metadatas?: Record<string, string>;
-  /** 负载均衡配置。 */
-  loadBalancer?: LoadBalancerConfig;
-  /** 健康检查配置。 */
-  healthCheck?: HealthCheckConfig;
-
-  /** @deprecated */
-  _enable?: boolean;
+/** TLS 配置 */
+interface TLSConfig {
+  /** TLS 证书文件路径 */
+  certFile: string;
+  /** TLS 私钥文件路径 */
+  keyFile: string;
+  /** CA 证书文件路径 */
+  trustedCaFile?: string;
+  /** TLS Server 名称 */
+  serverName?: string;
 }
 
-/** 代理后端服务配置。 */
+/** QUIC 选项 */
+interface QUICOptions {
+  /** 保活周期，默认 10 秒 */
+  keepalivePeriod?: number;
+  /** 最大空闲超时，默认 30 秒 */
+  maxIdleTimeout?: number;
+  /** 最大入站流数量，默认 100000 */
+  maxIncomingStreams?: number;
+}
+
+/** 端口范围配置 */
+interface PortsRange {
+  /** 起始端口 */
+  start?: number;
+  /** 终止端口 */
+  end?: number;
+  /** 单一端口 */
+  single?: number;
+}
+
+/** Header 操作 */
+interface HeaderOperations {
+  /** 设置 KV */
+  set?: Record<string, string>;
+}
+
+/** 单个 Header */
+interface HTTPHeader {
+  /** Header 名称 */
+  name: string;
+  /** Header 值 */
+  value: string;
+}
+
+/** 数据源类型，目前仅支持 file */
+interface ValueSource {
+  /** 数据源类型 */
+  type: 'file';
+  /** 文件配置 */
+  file?: FileSource;
+}
+
+/** 文件数据源配置 */
+interface FileSource {
+  /** 文件路径 */
+  path: string;
+}
+
+/** NAT 穿透配置 */
+interface NatTraversalConfig {
+  /** 禁用本地网络接口地址的辅助连接 */
+  disableAssistedAddrs?: boolean;
+}
+
+/** 代理后端服务配置 */
 interface ProxyBackend {
-  /** 被代理的本地服务 IP，默认为 127.0.0.1。 */
+  /** 被代理的本地服务 IP，默认 127.0.0.1 */
   localIP?: string;
-  /** 被代理的本地服务端口。 */
+
+  /** 被代理的本地服务端口 */
   localPort?: number;
-  /** 客户端插件配置，如果启用了客户端插件，则不需要配置 localIP 和 localPort。 */
+
+  /** 客户端插件配置，如果启用插件则无需 localIP/localPort */
   plugin?: ClientPluginOptions;
 }
 
@@ -174,209 +277,407 @@ type ClientPluginOptions =
   | UnixDomainSocketPluginOptions
   | HTTP2HTTPSPluginOptions
   | HTTPS2HTTPPluginOptions
-  | HTTPS2HTTPSPluginOptions;
+  | HTTPS2HTTPSPluginOptions
+  | TLS2RawPluginOptions
+  | VirtualNetPluginOptions;
 
-/** HTTP 代理插件配置 */
-interface HTTPProxyPluginOptions {
-  type: 'http_proxy';
-  /** HTTP 代理用户名。 */
-  httpUser?: string;
-  /** HTTP 代理密码。 */
-  httpPassword?: string;
+/** 代理基础配置，继承 ProxyBackend */
+interface ProxyBaseConfig extends ProxyBackend {
+  /** 代理名称 */
+  name: string;
+
+  /** 代理类型，可选 tcp、udp、http、https、tcpmux、stcp、sudp、xtcp */
+  // type: 'tcp' | 'udp' | 'http' | 'https' | 'tcpmux' | 'stcp' | 'sudp' | 'xtcp';
+
+  /** 代理注释信息，展示在 server dashboard 中 */
+  annotations?: Record<string, string>;
+
+  /** 代理网络层配置 */
+  transport?: ProxyTransport;
+
+  /** 附加元数据，传递给服务端插件 */
+  metadatas?: Record<string, string>;
+
+  /** 负载均衡配置 */
+  loadBalancer?: LoadBalancerConfig;
+
+  /** 健康检查配置 */
+  healthCheck?: HealthCheckConfig;
 }
 
-/** Socks5 代理插件配置 */
-interface Socks5PluginOptions {
-  type: 'socks5';
-  /** 用户名。 */
-  username?: string;
-  /** 密码。 */
-  password?: string;
-}
-
-/** 静态文件插件配置 */
-interface StaticFilePluginOptions {
-  type: 'static_file';
-  /** 静态文件所在本地路径。 */
-  localPath: string;
-  /** 去除用户 HTTP 请求 Path 的特定前缀。 */
-  stripPrefix?: string;
-  /** HTTP Basic Auth 用户名。 */
-  httpUser?: string;
-  /** HTTP Basic Auth 密码。 */
-  httpPassword?: string;
-}
-
-/** UNIX 域套接字插件配置 */
-interface UnixDomainSocketPluginOptions {
-  type: 'unix_domain_socket';
-  /** UNIX 域套接字的地址。 */
-  unixPath: string;
-}
-
-/** HTTP2HTTPS 代理插件配置 */
-interface HTTP2HTTPSPluginOptions {
-  type: 'http2https';
-  /** 本地 HTTPS 服务地址。 */
-  localAddr: string;
-  /** 替换 Host header。 */
-  hostHeaderRewrite?: string;
-  /** 对请求 Header 的操作配置。 */
-  requestHeaders?: HeaderOperations;
-}
-
-/** HTTPS2HTTP 代理插件配置 */
-interface HTTPS2HTTPPluginOptions {
-  type: 'https2http';
-  /** 本地 HTTPS 服务地址。 */
-  localAddr: string;
-  /** 替换 Host header。 */
-  hostHeaderRewrite?: string;
-  /** 对请求 Header 的操作配置。 */
-  requestHeaders?: HeaderOperations;
-  /** TLS 证书文件路径。 */
-  crtPath?: string;
-  /** TLS 密钥文件路径。 */
-  keyPath?: string;
-}
-
-/** HTTPS2HTTPS 代理插件配置 */
-interface HTTPS2HTTPSPluginOptions {
-  type: 'https2https';
-  /** 本地 HTTPS 服务地址。 */
-  localAddr: string;
-  /** 替换 Host header。 */
-  hostHeaderRewrite?: string;
-  /** 对请求 Header 的操作配置。 */
-  requestHeaders?: HeaderOperations;
-  /** TLS 证书文件路径。 */
-  crtPath?: string;
-  /** TLS 密钥文件路径。 */
-  keyPath?: string;
-}
-
-/** Header 操作配置 */
-interface HeaderOperations {
-  /** 在 Header 中设置指定的 KV 值。 */
-  set?: Record<string, string>;
-}
-
-/** 代理网络层配置。 */
+/** 代理网络层配置 */
 interface ProxyTransport {
-  /** 是否启用加密功能，启用后该代理和服务端之间的通信内容都会被加密传输。 */
+  /** 是否启用加密 */
   useEncryption?: boolean;
-  /** 是否启用压缩功能，启用后该代理和服务端之间的通信内容都会被压缩传输。 */
+
+  /** 是否启用压缩 */
   useCompression?: boolean;
-  /** 设置单个 proxy 的带宽限流，单位为 MB 或 KB，0 表示不限制。 */
+
+  /** 单个代理带宽限流 */
   bandwidthLimit?: string;
-  /** 限流类型，客户端限流或服务端限流，可选值为 client 和 server，默认为客户端限流。 */
+
+  /** 限流模式，client/server */
   bandwidthLimitMode?: string;
-  /** 启用 proxy protocol 协议的版本，可选值为 v1 和 v2。 */
-  proxyProtocolVersion?: string;
+
+  /** proxy protocol 版本 */
+  proxyProtocolVersion?: 'v1' | 'v2';
 }
 
-/** 负载均衡配置。 */
+/** 负载均衡配置 */
 interface LoadBalancerConfig {
-  /** 负载均衡分组名称，用户请求会以轮询的方式发送给同一个 group 中的代理。 */
+  /** 分组名称 */
   group: string;
-  /** 负载均衡分组密钥，用于对负载均衡分组进行鉴权，groupKey 相同的代理才会被加入到同一个分组中。 */
+
+  /** 分组密钥 */
   groupKey?: string;
 }
-
-/** 健康检查配置。 */
+/** 健康检查配置 */
 interface HealthCheckConfig {
-  /** 健康检查类型，可选值为 tcp 和 http。 */
-  type: string;
-  /** 健康检查超时时间(秒)，默认为 3s。 */
+  /** 检查类型 */
+  type: 'tcp' | 'http';
+
+  /** 超时时间(秒) */
   timeoutSeconds?: number;
-  /** 健康检查连续错误次数，连续检查错误多少次认为服务不健康，默认为 1。 */
+
+  /** 连续失败次数 */
   maxFailed?: number;
-  /** 健康检查周期(秒)，每隔多长时间进行一次健康检查，默认为 10s。 */
+
+  /** 检查周期(秒) */
   intervalSeconds?: number;
-  /** 健康检查的 HTTP 接口，如果健康检查类型是 http，则需要配置此参数。 */
+
+  /** HTTP 路径 */
   path?: string;
+
+  /** HTTP 请求头 */
+  httpHeaders?: HTTPHeader[];
 }
 
-/** 域名配置。 */
+/** 域名配置（继承结构） */
 interface DomainConfig {
-  /** 自定义域名列表。 */
+  /** 自定义域名列表 */
   customDomains?: string[];
-  /** 子域名。 */
+
+  /** 子域名 */
   subdomain?: string;
 }
-
 /** TCP 代理配置 */
 interface TCPProxyConfig extends ProxyBaseConfig {
+  /** 服务端绑定端口 */
   type: 'tcp';
-  /** 服务端绑定的端口，用户访问服务端此端口的流量会被转发到对应的本地服务。 */
   remotePort?: number;
 }
 
 /** UDP 代理配置 */
 interface UDPProxyConfig extends ProxyBaseConfig {
+  /** 服务端绑定端口 */
   type: 'udp';
-  /** 服务端绑定的端口，用户访问服务端此端口的流量会被转发到对应的本地服务。 */
   remotePort?: number;
 }
 
 /** HTTP 代理配置 */
 interface HTTPProxyConfig extends ProxyBaseConfig, DomainConfig {
   type: 'http';
-  /** URL 路由配置。 */
+  /** URL 路由 */
   locations?: string[];
-  /** HTTP Basic Auth 用户名。 */
+
+  /** HTTP BasicAuth 用户名 */
   httpUser?: string;
-  /** HTTP Basic Auth 密码。 */
+
+  /** HTTP BasicAuth 密码 */
   httpPassword?: string;
-  /** 替换 Host Header。 */
+
+  /** 替换 Host header */
   hostHeaderRewrite?: string;
-  /** 对请求 Header 的操作配置。 */
+
+  /** 请求 Header 操作 */
   requestHeaders?: HeaderOperations;
-  /** 根据 HTTP Basic Auth user 路由。 */
+
+  /** 响应 Header 操作 */
+  responseHeaders?: HeaderOperations;
+
+  /** 根据 BasicAuth user 路由 */
   routeByHTTPUser?: string;
 }
 
-/** HTTPS 代理配置 */
+/** HTTPS 代理配置，继承 DomainConfig */
 interface HTTPSProxyConfig extends ProxyBaseConfig, DomainConfig {
   type: 'https';
 }
 
-/** TCP 多路复用代理配置 */
+/** TCPMux 代理配置，继承 DomainConfig */
 interface TCPMuxProxyConfig extends ProxyBaseConfig, DomainConfig {
   type: 'tcpmux';
-  /** 用户名，如果配置此参数，通过 HTTP CONNECT 建立连接时需要通过 Proxy-Authorization 附加上正确的身份信息。 */
+  /** HTTP CONNECT 用户名 */
   httpUser?: string;
-  /** 密码。 */
+
+  /** HTTP CONNECT 密码 */
   httpPassword?: string;
-  /** 根据 HTTP Basic Auth user 路由。 */
+
+  /** 根据 BasicAuth user 路由 */
   routeByHTTPUser?: string;
-  /** 复用器类型，目前仅支持 httpconnect。 */
+
+  /** 复用器类型，目前仅支持 httpconnect */
   multiplexer?: string;
 }
 
 /** STCP 代理配置 */
 interface STCPProxyConfig extends ProxyBaseConfig {
   type: 'stcp';
-  /** 密钥，服务端和访问端的密钥需要一致，访问端才能访问到服务端。 */
+  /** 访问密钥 */
   secretKey?: string;
-  /** 允许访问的 visitor 用户列表，默认只允许同一用户下的 visitor 访问，配置为 * 则允许任何 visitor 访问。 */
+
+  /**
+   * 允许访问的 visitor 用户列表
+   * 默认仅允许同一用户访问，"*" 表示允许所有 visitor
+   */
   allowUsers?: string[];
 }
 
 /** XTCP 代理配置 */
 interface XTCPProxyConfig extends ProxyBaseConfig {
   type: 'xtcp';
-  /** 密钥，服务端和访问端的密钥需要一致，访问端才能访问到服务端。 */
+  /** 访问密钥 */
   secretKey?: string;
-  /** 允许访问的 visitor 用户列表，默认只允许同一用户下的 visitor 访问，配置为 * 则允许任何 visitor 访问。 */
+
+  /**
+   * 允许访问的 visitor 用户列表
+   * 默认仅允许同一用户访问，"*" 表示允许所有 visitor
+   */
   allowUsers?: string[];
+
+  /** NAT 穿透配置 */
+  natTraversal?: NatTraversalConfig;
 }
 
 /** SUDP 代理配置 */
 interface SUDPProxyConfig extends ProxyBaseConfig {
   type: 'sudp';
-  /** 密钥，服务端和访问端的密钥需要一致，访问端才能访问到服务端。 */
+  /** 访问密钥 */
   secretKey?: string;
-  /** 允许访问的 visitor 用户列表，默认只允许同一用户下的 visitor 访问，配置为 * 则允许任何 visitor 访问。 */
+
+  /**
+   * 允许访问的 visitor 用户列表
+   * 默认仅允许同一用户访问，"*" 表示允许所有 visitor
+   */
   allowUsers?: string[];
+}
+
+/** 访问者网络层配置 */
+interface VisitorTransport {
+  /** 是否启用加密功能，启用后通信内容会加密传输，如果 frpc 启用了全局 TLS，则不需要再启用此参数 */
+  useEncryption?: boolean;
+
+  /** 是否启用压缩功能，启用后通信内容会被压缩传输 */
+  useCompression?: boolean;
+}
+
+/** 访问者基础配置 */
+interface VisitorBaseConfig {
+  /** 访问者名称 */
+  name: string;
+
+  /** 访问者类型，可选 stcp、sudp、xtcp */
+  // type: 'stcp' | 'sudp' | 'xtcp';
+
+  /** 访问者网络层配置 */
+  transport?: VisitorTransport;
+
+  /** 密钥，服务端和访问端的密钥需要一致 */
+  secretKey?: string;
+
+  /** 要访问的 proxy 所属用户名，如果为空则默认为当前用户 */
+  serverUser?: string;
+
+  /** 要访问的 proxy 名称 */
+  serverName: string;
+
+  /** visitor 监听的本地地址，通过该地址和端口连接到远端代理服务 */
+  bindAddr?: string;
+
+  /** visitor 监听的本地端口，-1 表示不监听物理端口，通常用于 fallback */
+  bindPort: number;
+
+  /** 访问者插件配置，用于扩展 visitor 功能 */
+  plugin?: VisitorPluginOptions;
+}
+
+type VisitorPluginOptions = VirtualNetVisitorPluginOptions;
+
+/** STCP 访问者配置，继承 VisitorBaseConfig */
+interface STCPVisitorConfig extends VisitorBaseConfig {
+  type: 'stcp';
+}
+
+/** SUDP 访问者配置，继承 VisitorBaseConfig */
+interface SUDPVisitorConfig extends VisitorBaseConfig {
+  type: 'sudp';
+}
+
+/** XTCP 访问者配置，继承 VisitorBaseConfig */
+interface XTCPVisitorConfig extends VisitorBaseConfig {
+  type: 'xtcp';
+  /** 隧道底层通信协议，可选 quic 和 kcp，默认为 quic */
+  protocol?: 'quic' | 'kcp';
+
+  /** 是否保持隧道打开，会定期检查并尝试保持打开 */
+  keepTunnelOpen?: boolean;
+
+  /** 每小时尝试打开隧道的次数，默认值为 8 */
+  maxRetriesAnHour?: number;
+
+  /** 重试打开隧道的最小间隔时间（秒），默认 90s */
+  minRetryInterval?: number;
+
+  /** 回退到的其他 visitor 名称 */
+  fallbackTo?: string;
+
+  /** 连接建立超过多少毫秒后回退到其他 visitor */
+  fallbackTimeoutMs?: number;
+
+  /** NAT 穿透配置 */
+  natTraversal?: NatTraversalConfig;
+}
+
+/** HTTP 代理插件配置 */
+interface HTTPProxyPluginOptions {
+  /** 插件类型，设置为 "http_proxy" */
+  type: 'http_proxy';
+
+  /** HTTP 代理用户名 */
+  httpUser?: string;
+
+  /** HTTP 代理密码 */
+  httpPassword?: string;
+}
+
+/** Socks5 插件配置 */
+interface Socks5PluginOptions {
+  /** 插件类型，设置为 "socks5" */
+  type: 'socks5';
+
+  /** 用户名 */
+  username?: string;
+
+  /** 密码 */
+  password?: string;
+}
+
+/** 静态文件插件配置 */
+interface StaticFilePluginOptions {
+  /** 插件类型，设置为 "static_file" */
+  type: 'static_file';
+
+  /** 静态文件所在本地路径 */
+  localPath: string;
+
+  /** 去除用户 HTTP 请求 Path 的特定前缀 */
+  stripPrefix?: string;
+
+  /** HTTP Basic Auth 用户名 */
+  httpUser?: string;
+
+  /** HTTP Basic Auth 密码 */
+  httpPassword?: string;
+}
+
+/** UNIX 域套接字插件配置 */
+interface UnixDomainSocketPluginOptions {
+  /** 插件类型，设置为 "unix_domain_socket" */
+  type: 'unix_domain_socket';
+
+  /** UNIX 域套接字地址 */
+  unixPath: string;
+}
+
+/** HTTP 转 HTTPS 插件配置 */
+interface HTTP2HTTPSPluginOptions {
+  /** 插件类型，设置为 "http2https" */
+  type: 'http2https';
+
+  /** 本地 HTTPS 服务地址 */
+  localAddr: string;
+
+  /** 替换 Host header */
+  hostHeaderRewrite?: string;
+
+  /** 对请求 Header 的操作配置 */
+  requestHeaders?: HeaderOperations;
+}
+
+/** HTTPS 转 HTTP 插件配置 */
+interface HTTPS2HTTPPluginOptions {
+  /** 插件类型，设置为 "https2http" */
+  type: 'https2http';
+
+  /** 本地 HTTPS 服务地址 */
+  localAddr: string;
+
+  /** 替换 Host header */
+  hostHeaderRewrite?: string;
+
+  /** 对请求 Header 的操作配置 */
+  requestHeaders?: HeaderOperations;
+
+  /** 是否启用 HTTP/2，默认启用 */
+  enableHTTP2?: boolean;
+
+  /** TLS 证书文件路径 */
+  crtPath?: string;
+
+  /** TLS 密钥文件路径 */
+  keyPath?: string;
+}
+
+/** HTTPS 转 HTTPS 插件配置 */
+interface HTTPS2HTTPSPluginOptions {
+  /** 插件类型，设置为 "https2https" */
+  type: 'https2https';
+
+  /** 本地 HTTPS 服务地址 */
+  localAddr: string;
+
+  /** 替换 Host header */
+  hostHeaderRewrite?: string;
+
+  /** 对请求 Header 的操作配置 */
+  requestHeaders?: HeaderOperations;
+
+  /** 是否启用 HTTP/2，默认启用 */
+  enableHTTP2?: boolean;
+
+  /** TLS 证书文件路径 */
+  crtPath?: string;
+
+  /** TLS 密钥文件路径 */
+  keyPath?: string;
+}
+
+/** TLS 转 Raw 插件配置 */
+interface TLS2RawPluginOptions {
+  /** 插件类型，设置为 "tls2raw" */
+  type: 'tls2raw';
+
+  /** 本地服务地址 */
+  localAddr: string;
+
+  /** TLS 证书文件路径 */
+  crtPath?: string;
+
+  /** TLS 密钥文件路径 */
+  keyPath?: string;
+}
+
+/** 虚拟网络插件配置 */
+interface VirtualNetPluginOptions {
+  /** 插件类型，设置为 "virtual_net" */
+  type: 'virtual_net';
+}
+
+/** 虚拟网络访问者插件配置 */
+interface VirtualNetVisitorPluginOptions {
+  /** 插件类型，设置为 "virtual_net" */
+  type: 'virtual_net';
+
+  /** 要访问的目标虚拟 IP 地址，通常是服务端的虚拟网络地址 */
+  destinationIP: string;
 }

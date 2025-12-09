@@ -1,19 +1,20 @@
 import axios from 'axios';
 import type { components } from '@octokit/openapi-types';
+import { ElMessage } from 'element-plus';
 
 export const delay = (t: number) => new Promise(res => setTimeout(res, t));
 
 const platformDict: Record<string, string> = {
   darwin: 'darwin',
   win32: 'windows',
-  linux: 'linux'
+  linux: 'linux',
 };
 
 const archDict: Record<string, string> = {
   arm: 'arm',
   arm64: 'arm64',
   ia32: '386',
-  x64: 'amd64'
+  x64: 'amd64',
 };
 
 export async function getFrpcLatestVersion(platform: NodeJS.Platform, arch: string) {
@@ -23,6 +24,11 @@ export async function getFrpcLatestVersion(platform: NodeJS.Platform, arch: stri
   const name = `${platformDict[platform]}_${archDict[arch]}`;
   return {
     release: data,
-    currentAssets: data.assets.find(it => it.name.includes(name))
+    currentAssets: data.assets.find(it => it.name.includes(name)),
   };
+}
+
+export function copyString(str: string) {
+  utools.copyText(str);
+  ElMessage.success('已复制到剪贴板');
 }

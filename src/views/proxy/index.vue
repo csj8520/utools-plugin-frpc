@@ -1,12 +1,9 @@
 <template>
   <el-table class="h-full!" :data="config.proxies" stripe>
-    <el-table-column prop="name" label="服务备注名" width="100px" />
-    <el-table-column label="远程地址" :formatter="handleFormatRemoteUrl">
-      <template #="{ $index }: Scope">
-        <a v-if="remoteUrls[$index].startsWith('http')" href="javascript:void 0" @click="utools.shellOpenPath(remoteUrls[$index])">{{
-          remoteUrls[$index]
-        }}</a>
-        <p v-else>{{ remoteUrls[$index] }}</p>
+    <el-table-column prop="name" label="服务备注名" width="120px" />
+    <el-table-column label="远程地址">
+      <template #="{ row }: Scope">
+        <a href="javascript:void 0" @click="copyString(formatUrl(row))">{{ formatUrl(row) }}</a>
       </template>
     </el-table-column>
     <el-table-column label="本地地址" :formatter="handleFormatLocalUrl" />
@@ -26,18 +23,18 @@
       <template #="{ row }: Scope">
         <el-switch
           size="large"
-          :model-value="!config.start?.length || config.start?.includes(row.name)"
+          :model-value="allStart.includes(row.name)"
           inline-prompt
           active-text="开"
           inactive-text="关"
-          @change="handleSwitch(row)"
+          @update:model-value="switchStatus(row.name, Boolean($event))"
         />
       </template>
     </el-table-column>
   </el-table>
 
-  <el-button class="absolute right-3 bottom-3 z-3" type="primary" @click="handldAdd">添加</el-button>
-  <edit v-model="showEdit" :data="config.proxies[editIndex]" @enter="handleSaveEdit" />
+  <el-button class="absolute right-3 bottom-3 z-3" type="primary" @click="handleShowEdit(config.proxies?.length ?? 0)">添加</el-button>
+  <edit v-model="showEdit" :data="config.proxies?.[editIndex]" @enter="handleSaveEdit" />
 </template>
 
 <style lang="scss" scoped>
@@ -47,21 +44,16 @@
 </style>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
 import { ElMessage, ElMessageBox, RenderRowData } from 'element-plus';
-
-import { config } from '../../config';
 
 import Edit from './edit.vue';
 
-const { utools } = window;
-
-type Scope = RenderRowData<FrpcConfig.Proxie>;
+type Scope = RenderRowData<ProxyConfig>;
 
 const showEdit = ref<boolean>(false);
 const editIndex = ref<number>(-1);
 
-function handleFormatRemoteUrl(row: FrpcConfig.Proxie) {
+function formatUrl(row: ProxyConfig) {
   if (row.type === 'http' || row.type === 'https' || row.type === 'tcpmux') {
     const urls: string[] = [];
     const path = row.plugin?.type === 'static_file' && row.plugin.stripPrefix ? `/${row.plugin.stripPrefix}/` : '';
@@ -75,9 +67,7 @@ function handleFormatRemoteUrl(row: FrpcConfig.Proxie) {
   }
 }
 
-const remoteUrls = computed(() => config.value.proxies.map(it => handleFormatRemoteUrl(it)));
-
-function handleFormatLocalUrl(row: FrpcConfig.Proxie) {
+function handleFormatLocalUrl(row: ProxyConfig) {
   if (!row.plugin) return `${row.localIP || '127.0.0.1'}:${row.localPort}`;
   if (row.plugin.type === 'http2https') return row.plugin.localAddr;
   if (row.plugin.type === 'https2http') return row.plugin.localAddr;
@@ -94,41 +84,32 @@ function handleShowEdit(idx: number) {
   editIndex.value = idx;
 }
 
-async function handleSaveEdit(_config: FrpcConfig.Proxie) {
-  const others = config.value.proxies.slice(0, editIndex.value).concat(config.value.proxies.slice(editIndex.value + 1));
+async function handleSaveEdit(_config: ProxyConfig) {
+  config.value.proxies ||= [];
+  const others = [
+    ...(config.value.proxies ?? []),
+    ...config.value.proxies.slice(0, editIndex.value),
+    ...config.value.proxies.slice(editIndex.value + 1),
+  ];
+
   const hasName = others.some(it => it.name === _config.name);
   if (hasName) return ElMessage.error(`配置：[${_config.name}] 已存在`);
 
   if (editIndex.value === config.value.proxies.length) {
     config.value.proxies.push(_config);
-    console.log('_config: ', _config);
-    handleSwitch(_config, true);
+    switchStatus(_config.name, true);
   } else {
+    const hasEnable = allStart.value.includes(config.value.proxies[editIndex.value].name);
     config.value.proxies[editIndex.value] = _config;
+    switchStatus(_config.name, hasEnable);
   }
   showEdit.value = false;
-}
-
-function handldAdd() {
-  handleShowEdit(config.value.proxies.length);
 }
 
 async function hanldeDel(idx: number) {
   const res = await ElMessageBox.confirm('确定要删除吗').catch(e => e);
   if (res === 'cancel') return;
-  if (config.value.start?.includes(config.value.proxies[idx].name)) handleSwitch(config.value.proxies[idx]);
-  config.value.proxies.splice(idx, 1);
-}
-
-function handleSwitch(row: FrpcConfig.Proxie, open?: boolean) {
-  const start = config.value.proxies
-    .filter(it => {
-      const enable = !config.value.start?.length || config.value.start.includes(it.name);
-      return it.name === row.name ? open || !enable : enable;
-    })
-    .map(it => it.name);
-
-  config.value.start = start.length ? (start.length === config.value.proxies.length ? [] : start) : [''];
-  console.log('config.value.start: ', config.value.start);
+  switchStatus(config.value.proxies![idx].name, false);
+  config.value.proxies!.splice(idx, 1);
 }
 </script>

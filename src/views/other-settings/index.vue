@@ -4,10 +4,20 @@
       <el-input v-model="config.dnsServer" placeholder="114.114.114.114" />
     </el-form-item>
     <el-form-item label="HTTP 代理" prop="transport.proxyURL">
-      <el-input v-model="config.transport.proxyURL" placeholder="{protocol}://user:passwd@192.168.1.128:8080" />
+      <el-input
+        :model-value="config.transport?.proxyURL"
+        @update:model-value="config.transport = { ...config.transport, proxyURL: $event }"
+        placeholder="{protocol}://user:passwd@192.168.1.128:8080"
+      />
     </el-form-item>
     <el-form-item label="连接池大小" prop="transport.poolCount">
-      <el-input-number type="number" v-model="config.transport.poolCount" :min="0" placeholder="0" />
+      <el-input-number
+        type="number"
+        :model-value="config.transport?.poolCount"
+        @update:model-value="config.transport = { ...config.transport, poolCount: $event }"
+        :min="0"
+        placeholder="0"
+      />
     </el-form-item>
     <el-form-item label="开启网页管理">
       <el-checkbox :model-value="!!config.webServer" @change="handleEnableAdminUi" />
@@ -58,7 +68,7 @@ import { computed, ref } from 'vue';
 import { QuestionFilled } from '@element-plus/icons-vue';
 import type { FormInstance, CheckboxValueType } from 'element-plus';
 
-import { config, customConfig } from '../../config';
+import { config, customConfig } from '../../utils/config';
 const { utools } = window;
 
 const form = ref<FormInstance>(null!);

@@ -4,23 +4,29 @@ import vue from '@vitejs/plugin-vue';
 import { createPreloadPlugin, createUpxPlugin } from 'vite-plugin-utools-helper';
 
 import Components from 'unplugin-vue-components/vite';
+import AutoImport from 'unplugin-auto-import/vite';
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
 
 export default defineConfig({
   base: './',
   server: {
     host: '0.0.0.0',
-    port: 35181
+    port: 35181,
   },
   optimizeDeps: {
-    exclude: ['7z-wasm']
+    exclude: ['7z-wasm'],
   },
   plugins: [
     vue(),
     UnoCSS(),
     Components({
       resolvers: [ElementPlusResolver()],
-      dts: false // use element-plus/global
+    }),
+    AutoImport({
+      imports: ['vue'],
+      dirs: ['src/utils'],
+      vueTemplate: true,
+      dtsMode: 'overwrite',
     }),
     createPreloadPlugin({
       // name: 'window.preload',
@@ -28,7 +34,7 @@ export default defineConfig({
     }),
     createUpxPlugin({
       // outDir: 'upx',
-      outFileName: 'frpc-client-[version].upx'
-    })
-  ]
+      outFileName: 'frpc-client-[version].upx',
+    }),
+  ],
 });

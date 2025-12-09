@@ -11,7 +11,6 @@ type FrpcEvent = {
 };
 
 const CONFIG_KEY = 'config-json';
-const OLD_CONFIG_KEY = 'config';
 const CUSTOM_CONFIG_KEY = 'custom-config';
 
 export class Frpc extends EventEmitter<FrpcEvent> {
@@ -51,17 +50,8 @@ export class Frpc extends EventEmitter<FrpcEvent> {
 
     // 读取 db 数据，若无数据则读取 json 配置
     const data: FrpcConfig = utools.dbStorage.getItem(CONFIG_KEY) || this.defConfig;
-    // fix: config error
 
-    if (data.proxies.some(it => '_enable' in it)) {
-      data.proxies.forEach(it => delete it._enable);
-    }
-    if (data._custom) {
-      this.saveCustomConfig({ ...this.defCustomConfig, saveRestart: data._custom.saveRestart || false });
-      delete data._custom;
-    } else {
-      this.customConfig = utools.dbStorage.getItem(CUSTOM_CONFIG_KEY) || this.defCustomConfig;
-    }
+    this.customConfig = utools.dbStorage.getItem(CUSTOM_CONFIG_KEY) || this.defCustomConfig;
     await this.saveConfig(data);
   }
 

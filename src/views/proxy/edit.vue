@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :model-value="modelValue" @close="emit('update:modelValue', false)" title="编辑" style="min-width: 600px">
+  <el-dialog v-model="modelValue" title="编辑" style="min-width: 600px">
     <el-form :model="result" ref="form" label-width="100px">
       <el-form-item label="备注名" prop="name" required>
         <el-input v-model="result.name" placeholder="代理名称。" />
@@ -17,23 +17,43 @@
         </el-select>
       </el-form-item>
 
-      <template v-if="result.transport">
-        <el-form-item label="开启加密" prop="transport.useEncryption">
-          <el-checkbox v-model="result.transport.useEncryption" />
-        </el-form-item>
-        <el-form-item label="开启压缩" prop="transport.useCompression">
-          <el-checkbox v-model="result.transport.useCompression" />
-        </el-form-item>
-      </template>
-
-      <el-form-item label="本地IP" prop="localIP">
-        <el-input v-model="result.localIP" placeholder="被代理的本地服务 IP，默认为 127.0.0.1。" />
+      <el-form-item label="网络层">
+        <div class="flex gap-5">
+          <el-form-item label="开启加密" label-width="auto" prop="transport.useEncryption">
+            <el-checkbox
+              :model-value="result.transport?.useEncryption"
+              @update:model-value="result.transport = { ...result.transport, useEncryption: Boolean($event) }"
+            />
+          </el-form-item>
+          <el-form-item label="开启压缩" label-width="auto" prop="transport.useCompression">
+            <el-checkbox
+              :model-value="result.transport?.useCompression"
+              @update:model-value="result.transport = { ...result.transport, useCompression: Boolean($event) }"
+            />
+          </el-form-item>
+        </div>
       </el-form-item>
-      <el-form-item label="本地端口" prop="localPort" :required="!enablePlugin" title="被代理的本地服务端口。">
-        <el-input-number v-model="result.localPort" :min="0" :max="65535" placeholder="8080" />
+
+      <el-form-item label="本地地址">
+        <div class="flex items-center gap-5">
+          <el-form-item label="IP：" label-width="auto" prop="localIP">
+            <el-input v-model="result.localIP" placeholder="127.0.0.1" />
+          </el-form-item>
+          <el-form-item label="端口：" label-width="auto" prop="localPort" :required="!enablePlugin">
+            <el-input-number v-model="result.localPort" :min="0" :max="65535" placeholder="8080" />
+          </el-form-item>
+        </div>
+        <div class="text-12px lh-normal pt5">
+          <p>被代理的本地服务 IP，默认 127.0.0.1</p>
+          <p>被代理的本地服务端口</p>
+        </div>
       </el-form-item>
 
       <template v-if="result.type === 'http' || result.type === 'https' || result.type === 'tcpmux'">
+        <el-form-item label="子域名" prop="subdomain" :required="!result.customDomains?.length">
+          <el-input v-model="result.subdomain" placeholder="子域名。" />
+        </el-form-item>
+
         <el-form-item
           v-if="result.customDomains"
           label="自定义域名"
@@ -48,10 +68,6 @@
         </el-form-item>
         <el-form-item>
           <el-button @click="result.customDomains = [...(result.customDomains ?? []), '']">添加自定义域名</el-button>
-        </el-form-item>
-
-        <el-form-item label="子域名" prop="subdomain">
-          <el-input v-model="result.subdomain" placeholder="子域名。" />
         </el-form-item>
       </template>
 
@@ -74,7 +90,7 @@
           />
         </el-form-item>
         <el-form-item label="密码" prop="httpPassword">
-          <el-input v-model="result.httpPassword" placeholder="密码。" />
+          <el-input v-model="result.httpPassword" placeholder="密码。" type="password" show-password />
         </el-form-item>
         <el-form-item label="路由" prop="routeByHTTPUser">
           <el-input v-model="result.routeByHTTPUser" placeholder="根据 HTTP Basic Auth user 路由。" />
@@ -86,7 +102,7 @@
 
       <template v-if="result.type === 'stcp' || result.type === 'xtcp' || result.type === 'sudp'">
         <el-form-item label="密钥" prop="secretKey">
-          <el-input v-model="result.secretKey" />
+          <el-input v-model="result.secretKey" type="password" show-password />
         </el-form-item>
         <el-form-item v-if="result.allowUsers" label="用户" :prop="`allowUsers[${idx}]`" v-for="(_, idx) in result.allowUsers" required>
           <div class="flex w-full items-center">
@@ -99,25 +115,24 @@
         </el-form-item>
       </template>
 
-      <el-form-item label="使用插件" prop="tls_enable">
-        <el-checkbox :model-value="enablePlugin" @change="handleUsePlugin" />
-        <el-tooltip content="客户端插件配置，如果启用了客户端插件，则不需要配置 localIP 和 localPort。" placement="top">
-          <el-icon class="ml-5"><QuestionFilled /></el-icon>
-        </el-tooltip>
+      <el-form-item label="使用插件" prop="plugin.type">
+        <el-select
+          :model-value="result.plugin?.type ?? 'none'"
+          @update:model-value="result.plugin = $event === 'none' ? void 0 : { ...result.plugin, type: $event }"
+        >
+          <el-option label="无" value="none" />
+          <el-option label="http_proxy" value="http_proxy" />
+          <el-option label="socks5" value="socks5" />
+          <el-option label="static_file" value="static_file" />
+          <el-option label="unix_domain_socket" value="unix_domain_socket" />
+          <el-option label="http2https" value="http2https" />
+          <el-option label="https2http" value="https2http" />
+          <el-option label="https2https" value="https2https" />
+          <el-option label="tls2raw" value="tls2raw" />
+          <el-option label="virtual_net" value="virtual_net" />
+        </el-select>
       </el-form-item>
-
-      <template v-if="result.plugin">
-        <el-form-item label="插件名" prop="plugin.type" required>
-          <el-select v-model="result.plugin.type">
-            <el-option label="http_proxy" value="http_proxy" />
-            <el-option label="socks5" value="socks5" />
-            <el-option label="static_file" value="static_file" />
-            <el-option label="unix_domain_socket" value="unix_domain_socket" />
-            <el-option label="http2https" value="http2https" />
-            <el-option label="https2http" value="https2http" />
-            <el-option label="https2https" value="https2https" />
-          </el-select>
-        </el-form-item>
+      <template v-if="result.plugin?.type">
         <el-form-item v-if="result.plugin.type">插件参数</el-form-item>
         <template v-if="result.plugin.type === 'http_proxy'">
           <el-form-item label="代理用户名" prop="plugin.httpUser">
@@ -127,7 +142,7 @@
             <el-input v-model="result.plugin.httpPassword" placeholder="HTTP 代理密码。" type="password" show-password />
           </el-form-item>
         </template>
-        <template v-if="result.plugin.type === 'socks5'">
+        <template v-else-if="result.plugin.type === 'socks5'">
           <el-form-item label="用户名" prop="plugin.username">
             <el-input v-model="result.plugin.username" placeholder="用户名。" />
           </el-form-item>
@@ -135,7 +150,7 @@
             <el-input v-model="result.plugin.password" placeholder="密码。" type="password" show-password />
           </el-form-item>
         </template>
-        <template v-if="result.plugin.type === 'static_file'">
+        <template v-else-if="result.plugin.type === 'static_file'">
           <el-form-item label="文件路径" prop="plugin.localPath" required>
             <el-input v-model="result.plugin.localPath" placeholder="静态文件所在本地路径。" />
           </el-form-item>
@@ -149,20 +164,40 @@
             <el-input v-model="result.plugin.httpPassword" placeholder="HTTP Basic Auth 密码。" type="password" show-password />
           </el-form-item>
         </template>
-        <template v-if="result.plugin.type === 'unix_domain_socket'">
+        <template v-else-if="result.plugin.type === 'unix_domain_socket'">
           <el-form-item label="地址" prop="plugin.unixPath" required>
             <el-input v-model="result.plugin.unixPath" placeholder="UNIX 域套接字的地址。" />
           </el-form-item>
         </template>
-        <template v-if="result.plugin.type === 'http2https' || result.plugin.type === 'https2http' || result.plugin.type === 'https2https'">
+        <template
+          v-else-if="
+            result.plugin.type === 'http2https' ||
+            result.plugin.type === 'https2http' ||
+            result.plugin.type === 'https2https' ||
+            result.plugin.type === 'tls2raw'
+          "
+        >
           <el-form-item label="地址" prop="plugin.localAddr" required>
             <el-input v-model="result.plugin.localAddr" placeholder="本地 HTTPS 服务地址。" />
           </el-form-item>
-          <el-form-item label="Host header" prop="plugin.hostHeaderRewrite">
-            <el-input v-model="result.plugin.hostHeaderRewrite" placeholder="替换 Host header。" />
-          </el-form-item>
-          <!-- TODO: requestHeaders -->
+          <template v-if="result.plugin.type !== 'tls2raw'">
+            <el-form-item label="Host header" prop="plugin.hostHeaderRewrite">
+              <el-input v-model="result.plugin.hostHeaderRewrite" placeholder="替换 Host header。" />
+            </el-form-item>
+            <record-input
+              :model-value="result.plugin.requestHeaders?.set ?? {}"
+              @update:model-value="result.plugin.requestHeaders = { ...result.plugin.requestHeaders, set: $event }"
+              label="请求头"
+              prop="plugin.requestHeaders.set"
+            />
+          </template>
+
           <template v-if="result.plugin.type === 'https2http' || result.plugin.type === 'https2https'">
+            <el-form-item label="启用 HTTP/2" prop="tls_enable">
+              <el-checkbox :model-value="result.plugin.enableHTTP2 ?? true" @update:model-value="result.plugin.enableHTTP2 = Boolean($event)" />
+            </el-form-item>
+          </template>
+          <template v-if="result.plugin.type === 'https2http' || result.plugin.type === 'https2https' || result.plugin.type === 'tls2raw'">
             <el-form-item label="证书路径" prop="plugin.crtPath">
               <el-input v-model="result.plugin.crtPath" placeholder="TLS 证书文件路径。" />
             </el-form-item>
@@ -171,6 +206,7 @@
             </el-form-item>
           </template>
         </template>
+        <template v-else-if="result.plugin.type === 'virtual_net'"> </template>
       </template>
     </el-form>
     <template #footer>
@@ -182,19 +218,18 @@
 <style lang="scss" scoped></style>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
 import { cloneDeep } from 'lodash';
 import { CheckboxValueType, ElMessage, FormInstance } from 'element-plus';
-import { QuestionFilled, Close } from '@element-plus/icons-vue';
+import { Close } from '@element-plus/icons-vue';
 
 const form = ref<FormInstance>(null!);
-const result = ref<FrpcConfig.Proxie>(null!);
+const result = ref<ProxyConfig>(null!);
+const modelValue = defineModel<boolean>();
 
-const props = withDefaults(defineProps<{ modelValue?: boolean; data?: FrpcConfig.Proxie }>(), {
-  modelValue: false,
-  data: () => ({ type: 'http', name: '', transport: { useCompression: true, useEncryption: true } }),
+const props = withDefaults(defineProps<{ data?: ProxyConfig }>(), {
+  data: () => ({ type: 'http', name: '' }),
 });
-const emit = defineEmits(['update:modelValue', 'enter']);
+const emit = defineEmits(['enter']);
 
 const enablePlugin = computed(() => !!result.value.plugin);
 
@@ -214,9 +249,6 @@ function handleUsePlugin(value: CheckboxValueType) {
 async function handleSave() {
   const check = await form.value.validate().catch(() => false);
   if (!check) return ElMessage.error('请检查配置是否正确');
-  if (result.value.type === 'http' || result.value.type === 'https' || result.value.type === 'tcpmux') {
-    if (!(result.value.customDomains?.length || result.value.subdomain)) return ElMessage.error('自定义域名和子域名两者必须配置一个');
-  }
   emit('enter', result.value);
 }
 </script>

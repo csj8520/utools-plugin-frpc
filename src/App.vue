@@ -3,7 +3,8 @@
     <el-tabs v-model="activeTab">
       <el-tab-pane label="基本设置" name="basis"><tab-basis-settings ref="basisSettingsRef" /></el-tab-pane>
       <el-tab-pane label="其他设置" name="other"><tab-other-settings ref="otherSettingsRef" /></el-tab-pane>
-      <el-tab-pane label="服务列表" name="proxy"><tab-proxy /></el-tab-pane>
+      <el-tab-pane label="代理配置" name="proxy"><tab-proxy /></el-tab-pane>
+      <el-tab-pane label="访问者配置" name="visitor"><tab-visitor /></el-tab-pane>
       <el-tab-pane label="日志" name="log"><tab-log v-model:logs="logs" /></el-tab-pane>
     </el-tabs>
     <div class="main__btn">
@@ -86,10 +87,11 @@ import TabBasisSettings from './views/basis-settings/index.vue';
 import TabOtherSettings from './views/other-settings/index.vue';
 import TabProxy from './views/proxy/index.vue';
 import TabLog from './views/log/index.vue';
+import TabVisitor from './views/visitor/index.vue';
 
 import Download from './components/download.vue';
 
-import { config, customConfig } from './config';
+import { config, customConfig } from './utils/config';
 
 useDark();
 const { frpc } = window.preload;
@@ -182,6 +184,14 @@ async function initFrpc() {
 watch(customConfig, () => {
   frpc.saveCustomConfig(cloneDeep(customConfig.value));
 });
+
+watch(
+  config,
+  () => {
+    console.log('config: ', cloneDeep(config.value));
+  },
+  { deep: true },
+);
 // for dev
 window.addEventListener('beforeunload', () => {
   frpc.isRuning && frpc.exit();
