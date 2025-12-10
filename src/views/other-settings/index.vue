@@ -66,8 +66,6 @@ import { computed, ref } from 'vue';
 import { QuestionFilled } from '@element-plus/icons-vue';
 import type { FormInstance, CheckboxValueType } from 'element-plus';
 
-import { config, customConfig } from '../../utils/config';
-
 const form = ref<FormInstance>(null!);
 
 defineExpose({ validate: () => form.value.validate().catch(() => false) });

@@ -29,34 +29,50 @@
         </div>
       </el-form-item>
 
-      <el-form-item label="监听地址">
-        <div class="flex items-center gap-5">
-          <el-form-item label="IP：" label-width="auto" prop="bindAddr">
+      <div class="flex items-center gap-5">
+        <el-form-item label="监听IP：" prop="bindAddr">
+          <div class="wfull flex items-center gap-5">
             <el-input v-model="result.bindAddr" placeholder="127.0.0.1" />
-          </el-form-item>
-          <el-form-item label="端口：" label-width="auto" prop="bindPort" required>
+            <el-tooltip content="监听的本地地址，通过该地址和端口连接到远端代理服务" placement="top">
+              <el-icon><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </div>
+        </el-form-item>
+        <el-form-item label="端口：" label-width="auto" prop="bindPort" required>
+          <div class="wfull flex items-center gap-5">
             <el-input-number v-model="result.bindPort" :min="0" :max="65535" placeholder="8080" />
-          </el-form-item>
-        </div>
-        <div class="text-12px lh-normal pt5">
-          <p>监听的本地地址，通过该地址和端口连接到远端代理服务</p>
-          <p>监听的本地端口，-1 表示不监听物理端口，通常用于 fallback</p>
-        </div>
-      </el-form-item>
+            <el-tooltip content="监听的本地端口，-1 表示不监听物理端口，通常用于 fallback" placement="top">
+              <el-icon><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </div>
+        </el-form-item>
+      </div>
 
       <el-form-item label="用户名" prop="serverUser">
-        <el-input v-model="result.serverUser" />
-        <p class="text-12px">serverUser：要访问的 proxy 所属用户名，如果为空则默认为当前用户</p>
+        <div class="wfull flex items-center gap-5">
+          <el-input v-model="result.serverUser" />
+          <el-tooltip content="serverUser：要访问的 proxy 所属用户名，如果为空则默认为当前用户" placement="top">
+            <el-icon><QuestionFilled /></el-icon>
+          </el-tooltip>
+        </div>
       </el-form-item>
 
       <el-form-item label="代理名称" prop="serverName" required>
-        <el-input v-model="result.serverName" />
-        <p class="text-12px">serverName：要访问的 proxy 名称</p>
+        <div class="wfull flex items-center gap-5">
+          <el-input v-model="result.serverName" />
+          <el-tooltip content="serverName：要访问的 proxy 名称" placement="top">
+            <el-icon><QuestionFilled /></el-icon>
+          </el-tooltip>
+        </div>
       </el-form-item>
 
       <el-form-item label="密钥" prop="secretKey">
-        <el-input v-model="result.secretKey" />
-        <p class="text-12px">secretKey：密钥，服务端和访问端的密钥需要一致</p>
+        <div class="wfull flex items-center gap-5">
+          <el-input v-model="result.secretKey" />
+          <el-tooltip content="secretKey：密钥，服务端和访问端的密钥需要一致" placement="top">
+            <el-icon><QuestionFilled /></el-icon>
+          </el-tooltip>
+        </div>
       </el-form-item>
 
       <el-form-item label="使用插件" prop="plugin.type">
@@ -71,8 +87,12 @@
       <el-form-item v-if="result.plugin?.type">插件参数</el-form-item>
       <template v-if="result.plugin?.type === 'virtual_net'">
         <el-form-item label="虚拟 IP 地址" prop="plugin.destinationIP" required>
-          <el-input v-model="result.plugin.destinationIP" placeholder="" />
-          <p class="text-12px">destinationIP: 要访问的目标虚拟 IP 地址，通常是服务端的虚拟网络地址</p>
+          <div class="wfull flex items-center gap-5">
+            <el-input v-model="result.plugin.destinationIP" placeholder="" />
+            <el-tooltip content="destinationIP: 要访问的目标虚拟 IP 地址，通常是服务端的虚拟网络地址" placement="top">
+              <el-icon><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </div>
         </el-form-item>
       </template>
     </el-form>
@@ -86,7 +106,8 @@
 
 <script lang="ts" setup>
 import { cloneDeep } from 'es-toolkit';
-import { CheckboxValueType, ElMessage, FormInstance } from 'element-plus';
+import { ElMessage, FormInstance } from 'element-plus';
+import { QuestionFilled } from '@element-plus/icons-vue';
 
 const form = ref<FormInstance>(null!);
 const result = ref<VisitorConfig>(null!);

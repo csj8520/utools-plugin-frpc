@@ -34,20 +34,24 @@
         </div>
       </el-form-item>
 
-      <el-form-item label="本地地址">
-        <div class="flex items-center gap-5">
-          <el-form-item label="IP：" label-width="auto" prop="localIP">
+      <div class="flex items-center gap-5">
+        <el-form-item label="本地IP：" prop="localIP">
+          <div class="wfull flex items-center gap-5">
             <el-input v-model="result.localIP" placeholder="127.0.0.1" />
-          </el-form-item>
-          <el-form-item label="端口：" label-width="auto" prop="localPort" :required="!enablePlugin">
+            <el-tooltip content="被代理的本地服务 IP，默认 127.0.0.1" placement="top">
+              <el-icon><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </div>
+        </el-form-item>
+        <el-form-item label="端口：" label-width="auto" prop="localPort" :required="!enablePlugin">
+          <div class="wfull flex items-center gap-5">
             <el-input-number v-model="result.localPort" :min="0" :max="65535" placeholder="8080" />
-          </el-form-item>
-        </div>
-        <div class="text-12px lh-normal pt5">
-          <p>被代理的本地服务 IP，默认 127.0.0.1</p>
-          <p>被代理的本地服务端口</p>
-        </div>
-      </el-form-item>
+            <el-tooltip content="被代理的本地服务端口" placement="top">
+              <el-icon><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </div>
+        </el-form-item>
+      </div>
 
       <template v-if="result.type === 'http' || result.type === 'https' || result.type === 'tcpmux'">
         <el-form-item label="子域名" prop="subdomain" :required="!result.customDomains?.length">
@@ -220,7 +224,7 @@
 <script lang="ts" setup>
 import { cloneDeep } from 'es-toolkit';
 import { CheckboxValueType, ElMessage, FormInstance } from 'element-plus';
-import { Close } from '@element-plus/icons-vue';
+import { Close, QuestionFilled } from '@element-plus/icons-vue';
 
 const form = ref<FormInstance>(null!);
 const result = ref<ProxyConfig>(null!);
