@@ -6,7 +6,7 @@
         <a href="javascript:void 0" @click="copyString(formatUrl(row))">{{ formatUrl(row) }}</a>
       </template>
     </el-table-column>
-    <el-table-column label="代理名称" align="center" prop="serverName" />
+    <el-table-column label="代理名称" prop="serverName" />
     <el-table-column label="开启加密" width="82px" align="center">
       <template #="{ row }: Scope"><el-checkbox :model-value="row.transport?.useEncryption" /></template>
     </el-table-column>
@@ -47,8 +47,6 @@
 import { ElMessage, ElMessageBox, RenderRowData } from 'element-plus';
 
 import Edit from './edit.vue';
-
-const { utools } = window;
 
 type Scope = RenderRowData<VisitorConfig>;
 

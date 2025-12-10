@@ -1,6 +1,6 @@
 <template>
-  <div class="h-full overflow-y-auto p-3" ref="el" @scroll="handleScroll">
-    <p v-for="(it, idx) in logs" :key="idx">
+  <div class="h-full overflow-y-auto p-3 lh-tight text-sm flex flex-col gap-2" ref="el" @scroll="handleScroll">
+    <p v-for="(it, idx) in logs" :key="idx" class="bg-dark rd-2 px2 py1">
       <span v-for="(t, i) in it.spans" :style="t.css">{{ t.text }}</span>
     </p>
     <el-tooltip content="清空日志" placement="top">
@@ -37,7 +37,7 @@ watch(
     await delay(50);
     systemScroll = false;
   },
-  { deep: true }
+  { deep: true },
 );
 
 function handleScroll() {

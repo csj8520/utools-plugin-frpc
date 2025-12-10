@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import { promisify } from 'util';
 import { EventEmitter } from '@3xpo/events';
 import { ChildProcessWithoutNullStreams, spawn, execFile } from 'child_process';
+import TOML from 'smol-toml';
 
 type FrpcEvent = {
   log(log: string): void;
@@ -10,71 +11,75 @@ type FrpcEvent = {
   start(): void;
 };
 
-const CONFIG_KEY = 'config-json';
-const CUSTOM_CONFIG_KEY = 'custom-config';
+/**
+ * @deprecated
+ * 本地 toml 优先，utools db 后备，下个大版本移除
+ */
+const DEP_CONFIG_KEY = 'config-json';
 
 export class Frpc extends EventEmitter<FrpcEvent> {
-  public process: ChildProcessWithoutNullStreams | null = null;
+  private process: ChildProcessWithoutNullStreams | null = null;
   public configPath: string;
-  public frpcBinPath: string;
+  public frpcPath: string;
   public version: string = '0.0.0';
-  public hasFrpcBinFile: boolean = false;
-  public config: FrpcConfig = this.defConfig;
-  public customConfig: CustomConfig = this.defCustomConfig;
+  public hasFrpc: boolean = false;
+  public config: FrpcConfig = {};
 
   public get isRuning() {
     if (!this.process) return false;
     return !this.process.killed;
   }
 
-  public get defConfig(): FrpcConfig {
-    return { auth: {}, log: {}, transport: {}, proxies: [] };
-  }
-
-  public get defCustomConfig(): CustomConfig {
-    return { saveRestart: true };
-  }
-
   constructor(op: { configPath: string; frpcBinPath: string }) {
     super();
     this.configPath = op.configPath;
-    this.frpcBinPath = op.frpcBinPath;
+    this.frpcPath = op.frpcBinPath;
+  }
+
+  private async readLocalConfig() {
+    try {
+      const has = await fs.stat(this.configPath).catch(() => null);
+      if (!has?.isFile()) {
+        await this.saveConfig(utools.dbStorage.getItem(DEP_CONFIG_KEY) || {});
+        // utools.dbStorage.removeItem(DEP_CONFIG_KEY);
+      }
+
+      const text = (await fs.readFile(this.configPath)).toString();
+      return TOML.parse(text);
+    } catch (error) {
+      this.emit('error', '配置文件读取失败，请检查配置文件格式！');
+      this.emit('error', String(error));
+      return {};
+    }
   }
 
   public async init() {
-    const stat = await fs.stat(this.frpcBinPath).catch(() => null);
-    this.hasFrpcBinFile = Boolean(stat?.isFile());
-    if (this.hasFrpcBinFile) {
-      this.version = (await promisify(execFile)(this.frpcBinPath, ['-v'])).stdout.trim();
+    await this.reloadLocalConfig();
+
+    const stat = await fs.stat(this.frpcPath).catch(() => null);
+    this.hasFrpc = Boolean(stat?.isFile());
+    if (this.hasFrpc) {
+      this.version = (await promisify(execFile)(this.frpcPath, ['-v'])).stdout.trim();
     }
+  }
 
-    // 读取 db 数据，若无数据则读取 json 配置
-    const data: FrpcConfig = utools.dbStorage.getItem(CONFIG_KEY) || this.defConfig;
-
-    this.customConfig = utools.dbStorage.getItem(CUSTOM_CONFIG_KEY) || this.defCustomConfig;
-    await this.saveConfig(data);
+  public async reloadLocalConfig() {
+    this.config = await this.readLocalConfig();
   }
 
   public async saveConfig(json: FrpcConfig) {
-    // 保存配置到 utools，同时写入到 json
-    utools.dbStorage.setItem(CONFIG_KEY, json);
-    await fs.writeFile(this.configPath, JSON.stringify(json, void 0, 2));
+    await fs.writeFile(this.configPath, TOML.stringify(json));
     this.config = json;
-  }
-
-  public async saveCustomConfig(json: CustomConfig) {
-    utools.dbStorage.setItem(CUSTOM_CONFIG_KEY, json);
-    this.customConfig = json;
   }
 
   public async saveFrpcBinFile(buf: ArrayBuffer) {
     // https://www.nodeapp.cn/fs.html#fs_file_modes
-    await fs.writeFile(this.frpcBinPath, Buffer.from(buf), { mode: 0o755 });
+    await fs.writeFile(this.frpcPath, Buffer.from(buf), { mode: 0o755 });
   }
 
   public run() {
     if (this.isRuning) throw new Error('Frpc is runing');
-    this.process = spawn(this.frpcBinPath, ['-c', this.configPath]);
+    this.process = spawn(this.frpcPath, ['-c', this.configPath]);
     this.process.stdout.on('data', (chunks: Buffer) => this.emit('log', chunks.toString()));
     this.process.stderr.on('data', (chunks: Buffer) => this.emit('error', chunks.toString()));
 

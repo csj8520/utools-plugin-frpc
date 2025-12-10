@@ -1,11 +1,11 @@
 <template>
-  <el-dialog :model-value="modelValue" @close="handleCancle" title="下载 Frpc">
+  <el-dialog v-model="modelValue" @close="handleCancle" title="下载 Frpc">
     <div v-if="!latest?.currentAssets">
-      <p class="pb-5 text-center">正在为你查找最新版 Frpc 客户端</p>
+      <p class="pb-5 text-center">正在查找最新版 Frpc 客户端</p>
       <span class="flex w-full h-10 relative" v-if="searchIng" v-loading="searchIng" element-loading-background="rgba(0,0,0,0)"></span>
       <template v-if="searchError">
-        <p class="pb-5 text-center">获取失败，你可以手动下载 frpc 可执行文件放入：</p>
-        <p class="text-center">{{ frpc.frpcBinPath }}</p>
+        <p class="pb-5 text-center">获取失败，可以手动下载 frpc 可执行文件放入：</p>
+        <p class="text-center">{{ frpc.frpcPath }}</p>
       </template>
     </div>
 
@@ -28,32 +28,29 @@
 <script lang="ts" setup>
 import semver from 'semver';
 import SevenZip from '7z-wasm';
-import { h, ref, watch } from 'vue';
 import type { AsyncReturnType } from 'type-fest';
-import axios, { CancelTokenSource } from 'axios';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 import { getFrpcLatestVersion } from '../utils';
 
 const { frpc, platform, arch } = window.preload;
 
-const props = withDefaults(defineProps<{ modelValue?: boolean }>(), { modelValue: false });
+const modelValue = defineModel<boolean>();
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void;
-  (e: 'success'): void;
+  success: [];
 }>();
 
 const searchIng = ref<boolean>(false);
 const searchError = ref<boolean>(false);
 const latest = ref<AsyncReturnType<typeof getFrpcLatestVersion>>();
 const downloadProgress = ref<number>(0);
-const cancelTokens = ref<CancelTokenSource>();
+const abortController = shallowRef<AbortController>();
 const downloadIng = ref<boolean>(false);
 
 watch(
-  () => props.modelValue,
+  modelValue,
   async () => {
-    if (!props.modelValue) return;
+    if (!modelValue.value) return;
     try {
       searchIng.value = true;
       searchError.value = false;
@@ -83,39 +80,38 @@ async function handleDownload() {
       await ElMessageBox.confirm(
         h('p', [
           '如果系统检测到有病毒，请允许此操作 ',
-          h(
-            'a',
-            {
-              href: 'javascript:void(0)',
-              onClick: () => utools.shellOpenExternal('https://github.com/fatedier/frp/issues/1204'),
-            },
-            '查看详情',
-          ),
+          h('a', { href: 'javascript:void(0)', onClick: () => copyString('https://github.com/fatedier/frp/issues/1204') }, '查看详情'),
         ]),
       );
     }
 
     if (frpc.isRuning) {
       await ElMessageBox.confirm('需要先关闭 Frpc');
-      frpc.exit();
+      await frpc.exit();
     }
-    cancelTokens.value = axios.CancelToken.source();
-    const { status, data } = await axios.get<ArrayBuffer>(latest.value!.currentAssets!.browser_download_url, {
-      cancelToken: cancelTokens.value.token,
-      responseType: 'arraybuffer',
-      onDownloadProgress: p => p.total && (downloadProgress.value = Math.floor((p.loaded / p.total) * 90)),
-    });
+    abortController.value = new AbortController();
+    const res = await fetch(latest.value!.currentAssets!.browser_download_url, { signal: abortController.value.signal });
+    if (!res.body) throw new Error('下载错误');
+    const reader = res.body.getReader();
+    const contentLength = Number(res.headers.get('content-length'));
+    const blob = new Uint8Array(contentLength);
+    let offset = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      blob.set(value!, offset);
+      offset += value!.length;
+      downloadProgress.value = Math.floor((offset / contentLength) * 90);
+    }
 
-    cancelTokens.value = void 0;
-    if (status !== 200) return ElMessage.error('下载错误');
-
-    const archiveData = new Uint8Array(data);
+    const archiveData = new Uint8Array(blob);
     const sevenZip = await SevenZip({ print: s => frpc.emit('log', s) });
     downloadProgress.value = 92;
     const name = new URL(latest.value!.currentAssets!.browser_download_url).pathname.split('/').at(-1)!;
     const stream = sevenZip.FS.open(name, 'w+', 0o777);
     sevenZip.FS.write(stream, archiveData, 0, archiveData.length);
     sevenZip.FS.close(stream);
+
     let file: Uint8Array | void = void 0;
     if (name.endsWith('.zip')) {
       sevenZip.callMain(['e', name, 'frpc.exe', '-r']);
@@ -127,30 +123,26 @@ async function handleDownload() {
       sevenZip.FS.chmod('frpc', 0o777);
       file = sevenZip.FS.readFile('frpc', { encoding: 'binary' });
     }
+
     downloadProgress.value = 98;
-    if (file) {
-      await frpc.saveFrpcBinFile(file.buffer as ArrayBuffer);
-      downloadProgress.value = 100;
-      ElMessage.success('下载成功');
-      emit('update:modelValue', false);
-      emit('success');
-    } else {
-      return ElMessage.error('解压文件出错');
-    }
+    if (!file) throw new Error('解压文件出错');
+    await frpc.saveFrpcBinFile(file.buffer as ArrayBuffer);
+    downloadProgress.value = 100;
+    ElMessage.success('下载成功');
+    modelValue.value = false;
+    emit('success');
   } catch (error: any) {
-    console.log('error: ', error);
-    if (error === 'cancel') return;
-    if (error?.code === axios.AxiosError.ERR_CANCELED) return;
-    frpc.emit('error', String(error));
+    if (error instanceof DOMException && error.name === 'AbortError') return;
+    throw error;
   } finally {
-    cancelTokens.value = void 0;
+    abortController.value = void 0;
     downloadIng.value = false;
   }
 }
 
 function handleCancle() {
-  cancelTokens.value?.cancel();
-  cancelTokens.value = void 0;
-  emit('update:modelValue', false);
+  abortController.value?.abort();
+  abortController.value = void 0;
+  modelValue.value = false;
 }
 </script>

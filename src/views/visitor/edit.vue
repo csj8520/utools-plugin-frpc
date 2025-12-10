@@ -85,7 +85,7 @@
 <style lang="scss" scoped></style>
 
 <script lang="ts" setup>
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'es-toolkit';
 import { CheckboxValueType, ElMessage, FormInstance } from 'element-plus';
 
 const form = ref<FormInstance>(null!);

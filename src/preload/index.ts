@@ -11,7 +11,7 @@ const baseDir = path.join(utools.getPath('home'), '.utools-plugin-frpc');
 
 const frpcBinPath = path.join(baseDir, platform === 'win32' ? 'frpc.exe' : 'frpc');
 console.log('frpcBinPath: ', frpcBinPath);
-const configPath = path.join(baseDir, 'frpc.json');
+const configPath = path.join(baseDir, 'frpc.toml');
 console.log('configPath: ', configPath);
 
 const stat = fs.statSync(baseDir, { throwIfNoEntry: false });

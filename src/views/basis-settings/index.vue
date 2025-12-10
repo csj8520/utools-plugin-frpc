@@ -34,6 +34,9 @@
             <el-option label="error" value="error" />
           </el-select>
         </el-form-item>
+        <el-form-item label="配置文件">
+          <a href="javascript:void 0" @click="copyString(frpc.configPath)">{{ frpc.configPath }}</a>
+        </el-form-item>
       </div>
       <div class="flex-1">
         <el-form-item label="端口" required prop="serverPort">
@@ -91,10 +94,12 @@
 <style lang="scss" scoped></style>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
 import type { FormInstance } from 'element-plus';
 
 import { config } from '../../utils/config';
+
+const { frpc } = window.preload;
+const { utools } = window;
 
 const form = ref<FormInstance>(null!);
 

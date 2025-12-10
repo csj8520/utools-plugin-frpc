@@ -1,15 +1,8 @@
-import { computed, ref } from 'vue';
+import { useStorage } from '@vueuse/core';
 
-export const config = ref<FrpcConfig>({
-  auth: {},
-  log: {},
-  transport: {},
-  proxies: [],
-});
+export const config = ref<FrpcConfig>({});
 
-export const customConfig = ref<CustomConfig>({
-  saveRestart: false,
-});
+export const customConfig = useStorage<CustomConfig>('custom-config', {});
 
 export const allName = computed(() => [...(config.value.proxies ?? []), ...(config.value.visitors ?? [])].map(it => it.name));
 export const allStart = computed(() => {

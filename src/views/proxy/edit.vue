@@ -218,7 +218,7 @@
 <style lang="scss" scoped></style>
 
 <script lang="ts" setup>
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'es-toolkit';
 import { CheckboxValueType, ElMessage, FormInstance } from 'element-plus';
 import { Close } from '@element-plus/icons-vue';
 
@@ -240,11 +240,6 @@ watch(
   },
   { immediate: true },
 );
-
-function handleUsePlugin(value: CheckboxValueType) {
-  if (value) delete result.value.plugin;
-  else result.value.plugin = {} as any;
-}
 
 async function handleSave() {
   const check = await form.value.validate().catch(() => false);

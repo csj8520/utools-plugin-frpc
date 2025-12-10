@@ -18,11 +18,13 @@ import App from './App.vue';
 function handleError(error: any) {
   // 屏蔽在控制输入代码报错信息
   // if (error instanceof ErrorEvent && error.message === 'Uncaught EvalError: Possible side-effect in debug-evaluate') return;
+  if (error === 'cancel') return;
+  if (error === 'close') return;
   console.error(error);
   ElNotification({
     title: 'Error',
     message: error.message ?? String(error),
-    type: 'error'
+    type: 'error',
   });
 }
 

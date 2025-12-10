@@ -87,7 +87,7 @@ function handleShowEdit(idx: number) {
 async function handleSaveEdit(_config: ProxyConfig) {
   config.value.proxies ||= [];
   const others = [
-    ...(config.value.proxies ?? []),
+    ...(config.value.visitors ?? []),
     ...config.value.proxies.slice(0, editIndex.value),
     ...config.value.proxies.slice(editIndex.value + 1),
   ];

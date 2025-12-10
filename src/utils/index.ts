@@ -1,4 +1,3 @@
-import axios from 'axios';
 import type { components } from '@octokit/openapi-types';
 import { ElMessage } from 'element-plus';
 
@@ -19,13 +18,11 @@ const archDict: Record<string, string> = {
 
 export async function getFrpcLatestVersion(platform: NodeJS.Platform, arch: string) {
   if (!(platform in platformDict && arch in archDict)) return null;
-  const { status, data } = await axios.get<components['schemas']['release']>('https://api.github.com/repos/fatedier/frp/releases/latest');
-  if (status !== 200) return null;
+  const res = await fetch('https://api.github.com/repos/fatedier/frp/releases/latest');
+  if (!res.ok) throw new Error('获取版本信息失败');
+  const data: components['schemas']['release'] = await res.json();
   const name = `${platformDict[platform]}_${archDict[arch]}`;
-  return {
-    release: data,
-    currentAssets: data.assets.find(it => it.name.includes(name)),
-  };
+  return { release: data, currentAssets: data.assets.find(it => it.name.includes(name)) };
 }
 
 export function copyString(str: string) {

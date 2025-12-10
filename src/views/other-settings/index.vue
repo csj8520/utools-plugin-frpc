@@ -40,16 +40,14 @@
         </el-form-item>
       </div>
       <el-form-item>
-        <a href="javascript:void 0" @click="utools.shellOpenPath(webServerUrl)">{{ webServerUrl }}</a>
+        <a href="javascript:void 0" @click="copyString(webServerUrl)">{{ webServerUrl }}</a>
       </el-form-item>
     </template>
 
     <!-- <el-form-item label="开启 TLS" prop="transport.tls">
       <el-checkbox v-model="config.transport.tls" />
     </el-form-item> -->
-    <!-- <el-form-item label="禁用标准输出中的日志颜色" prop="log.disablePrintColor">
-      <el-checkbox v-model="config.log.disablePrintColor" />
-    </el-form-item> -->
+
     <el-form-item label="失败后退出" prop="loginFailExit">
       <el-checkbox :model-value="config.loginFailExit ?? true" @click="config.loginFailExit = !(config.loginFailExit ?? true)" />
       <i class="el-checkbox"></i>
@@ -69,7 +67,6 @@ import { QuestionFilled } from '@element-plus/icons-vue';
 import type { FormInstance, CheckboxValueType } from 'element-plus';
 
 import { config, customConfig } from '../../utils/config';
-const { utools } = window;
 
 const form = ref<FormInstance>(null!);
 
