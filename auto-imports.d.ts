@@ -13,12 +13,13 @@ declare global {
   const config: typeof import('./src/utils/config').config
   const copyString: typeof import('./src/utils/index').copyString
   const createApp: typeof import('vue').createApp
+  const custom: typeof import('./src/utils/config').custom
   const customConfig: typeof import('./src/utils/config').customConfig
   const customRef: typeof import('vue').customRef
   const defineAsyncComponent: typeof import('vue').defineAsyncComponent
   const defineComponent: typeof import('vue').defineComponent
-  const delay: typeof import('./src/utils/index').delay
   const effectScope: typeof import('vue').effectScope
+  const frpc: typeof import('./src/utils/index').frpc
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getCurrentWatcher: typeof import('vue').getCurrentWatcher
@@ -92,12 +93,13 @@ declare module 'vue' {
     readonly config: UnwrapRef<typeof import('./src/utils/config')['config']>
     readonly copyString: UnwrapRef<typeof import('./src/utils/index')['copyString']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
+    readonly custom: UnwrapRef<typeof import('./src/utils/config')['custom']>
     readonly customConfig: UnwrapRef<typeof import('./src/utils/config')['customConfig']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
-    readonly delay: UnwrapRef<typeof import('./src/utils/index')['delay']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly frpc: UnwrapRef<typeof import('./src/utils/index')['frpc']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly getCurrentWatcher: UnwrapRef<typeof import('vue')['getCurrentWatcher']>

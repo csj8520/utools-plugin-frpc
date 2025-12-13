@@ -1,10 +1,10 @@
 <template>
   <div class="h-full overflow-y-auto p-3 lh-tight text-sm flex flex-col gap-2" ref="el" @scroll="handleScroll">
-    <p v-for="(it, idx) in logs" :key="idx" class="bg-dark rd-2 px2 py1">
-      <span v-for="(t, i) in it.spans" :style="t.css">{{ t.text }}</span>
+    <p v-for="it in logs" :key="it.uuid" class="bg-dark rd-2 px2 py1">
+      <span v-for="t in it.spans" :style="t.css">{{ t.text }}</span>
     </p>
     <el-tooltip content="清空日志" placement="top">
-      <el-button class="absolute right-5 bottom-3" type="danger" :icon="Delete" circle @click="emit('update:logs', [])" />
+      <el-button class="absolute right-5 bottom-3" type="danger" :icon="Delete" circle @click="logs = []" />
     </el-tooltip>
   </div>
 </template>
@@ -13,37 +13,37 @@
 
 <script lang="ts" setup>
 import { AnsiColored } from 'ansicolor';
-import { ref, watch, nextTick } from 'vue';
 import { Delete } from '@element-plus/icons-vue';
 
-import { delay } from '../../utils';
+export interface Log extends AnsiColored {
+  uuid: string;
+}
 
-const props = withDefaults(defineProps<{ logs?: AnsiColored[] }>(), { logs: () => [] });
-const emit = defineEmits<{
-  (e: 'update:logs', v: AnsiColored[]): void;
-}>();
-const el = ref<HTMLDivElement>(null!);
+const logs = defineModel<Log[]>('logs', { default: () => [] });
+
+const el = useTemplateRef('el');
 
 let systemScroll = false;
 let userScroll = false;
 
 watch(
-  () => props.logs,
+  () => logs,
   async () => {
-    if (userScroll) return;
     await nextTick();
+    if (!el.value) return;
+    if (userScroll) return;
     systemScroll = true;
     el.value.scrollTop = el.value.scrollHeight - el.value.offsetHeight;
-    await delay(50);
+    await nextTick();
     systemScroll = false;
   },
-  { deep: true },
+  { deep: true, immediate: true },
 );
 
 function handleScroll() {
+  if (!el.value) return;
   if (systemScroll) return;
-  userScroll = el.value.scrollHeight - el.value.offsetHeight - el.value.scrollTop > 200;
+  const offsetBottom = el.value.scrollHeight - el.value.offsetHeight - el.value.scrollTop;
+  userScroll = offsetBottom > 100;
 }
-
-// const handleScroll = throttle(_handleScroll, 200, { leading: false, trailing: true });
 </script>

@@ -3,9 +3,9 @@
     <el-tabs v-model="activeTab">
       <el-tab-pane label="基本设置" name="basis"><tab-basis-settings ref="basisSettingsRef" /></el-tab-pane>
       <el-tab-pane label="其他设置" name="other"><tab-other-settings ref="otherSettingsRef" /></el-tab-pane>
-      <el-tab-pane label="代理配置" name="proxy"><tab-proxy /></el-tab-pane>
-      <el-tab-pane label="访问者配置" name="visitor"><tab-visitor /></el-tab-pane>
-      <el-tab-pane label="日志" name="log"><tab-log v-model:logs="logs" /></el-tab-pane>
+      <el-tab-pane label="代理配置" name="proxy"><tab-proxy v-if="activeTab === 'proxy'" /></el-tab-pane>
+      <el-tab-pane label="访问者配置" name="visitor"><tab-visitor v-if="activeTab === 'visitor'" /></el-tab-pane>
+      <el-tab-pane label="日志" name="log"><tab-log v-if="activeTab === 'log'" v-model:logs="logs" /></el-tab-pane>
     </el-tabs>
     <div class="main__btn flex-shrink-0 flex justify-between px2 py1 b-t b-t-solid b-gray-7">
       <div class="flex items-center gap-4">
@@ -67,7 +67,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import TabBasisSettings from './views/basis-settings/index.vue';
 import TabOtherSettings from './views/other-settings/index.vue';
 import TabProxy from './views/proxy/index.vue';
-import TabLog from './views/log/index.vue';
+import TabLog, { Log } from './views/log/index.vue';
 import TabVisitor from './views/visitor/index.vue';
 
 import Download from './components/download.vue';
@@ -77,17 +77,18 @@ import { Refresh } from '@element-plus/icons-vue';
 
 useDark();
 
-const frpc = shallowRef(window.preload.frpc);
 const activeTab = ref('basis');
 
-const logs = ref<AnsiColored[]>([]);
+const logs = ref<Log[]>([]);
 
 const basisSettingsRef = ref<InstanceType<typeof TabBasisSettings>>(null!);
 const otherSettingsRef = ref<InstanceType<typeof TabOtherSettings>>(null!);
 
 const showDownload = ref<boolean>(false);
 
-const changed = computed(() => !isEqual(config.value, frpc.value.config));
+const changedConfig = computed(() => !isEqual(config.value, frpc.value.config));
+const changedCustom = computed(() => !isEqual(custom.value, customConfig.value));
+const changed = computed(() => changedConfig.value || changedCustom.value);
 
 async function handleRun() {
   if (changed.value) return ElMessage.warning('你有修改还未保存');
@@ -102,15 +103,20 @@ function handleReset() {
 }
 
 async function handleSave() {
-  if (!(await basisSettingsRef.value.validate())) return (activeTab.value = 'basis'), ElMessage.error('请检查基本设置');
-  if (!(await otherSettingsRef.value.validate())) return (activeTab.value = 'other'), ElMessage.error('请检查其他设置');
-  await frpc.value.saveConfig(cloneDeep(config.value));
-  triggerRef(frpc);
-  if (!frpc.value.isRuning) return;
-  if (!customConfig.value.saveRestart) return ElMessage.info('保存成功，可手动重启以生效');
-  await frpc.value.exit();
-  await handleRun();
-  ElMessage.success('保存并重启成功');
+  if (changedConfig.value) {
+    if (!(await basisSettingsRef.value.validate())) return (activeTab.value = 'basis'), ElMessage.error('请检查基本设置');
+    if (!(await otherSettingsRef.value.validate())) return (activeTab.value = 'other'), ElMessage.error('请检查其他设置');
+    await frpc.value.saveConfig(cloneDeep(config.value));
+    triggerRef(frpc);
+    if (!frpc.value.isRuning) return;
+    if (!customConfig.value.saveRestart) return ElMessage.info('保存成功，可手动重启以生效');
+    await frpc.value.exit();
+    await handleRun();
+    ElMessage.success('保存并重启成功');
+  }
+  if (changedCustom.value) {
+    customConfig.value = cloneDeep(custom.value);
+  }
 }
 
 function handleLog(log: string) {
@@ -119,9 +125,9 @@ function handleLog(log: string) {
     .split('\n')
     .map(it => it.trim())
     .filter(Boolean);
-  logs.value.push(...lines.map(it => ansicolor.parse(it)).filter(it => it.spans.length));
+  logs.value.push(...lines.map(it => ({ ...ansicolor.parse(it), uuid: crypto.randomUUID() })).filter(it => it.spans.length));
   const maxLine = 4000;
-  if (logs.value.length > maxLine) logs.value.splice(0, logs.value.length - (maxLine - 1000));
+  if (logs.value.length > maxLine) logs.value.splice(0, logs.value.length - maxLine);
 }
 
 async function checkVersion() {
@@ -143,34 +149,35 @@ async function initFrpc() {
   frpc.value.on('error', handleLog);
   frpc.value.on('error', ElMessage.error);
 
-  // if (customConfig.value.configPath) {
-  //   frpc.value.configPath = customConfig.value.configPath;
-  // }
-  // if (customConfig.value.frpcPath) {
-  //   frpc.value.frpcPath = customConfig.value.frpcPath;
-  // }
+  frpc.value.configPath = customConfig.value.configPath || window.preload.configPath;
+  frpc.value.frpcPath = customConfig.value.frpcPath || window.preload.frpcBinPath;
+  console.log('frpc.value: ', frpc.value);
   await frpc.value.init();
   triggerRef(frpc);
 
   showDownload.value = !frpc.value.hasFrpc;
 
   config.value = cloneDeep(frpc.value.config);
+  custom.value = cloneDeep(customConfig.value);
   console.log('config.value: ', config.value);
 }
 
 async function handleReload() {
   if (changed.value) await ElMessageBox.confirm('你有修改还未保存，是否要继续？', '提示', { cancelButtonText: '取消', confirmButtonText: '确定' });
-  await frpc.value.reloadLocalConfig();
+  await initFrpc();
+  // await frpc.value.reloadLocalConfig();
   config.value = cloneDeep(frpc.value.config);
 }
 
-watch(
-  config,
-  () => {
-    console.log('config: ', cloneDeep(config.value));
-  },
-  { deep: true },
-);
+if (import.meta.env.DEV) {
+  watch(
+    config,
+    () => {
+      console.log('config: ', cloneDeep(config.value));
+    },
+    { deep: true },
+  );
+}
 
 // for dev
 window.addEventListener('beforeunload', () => {

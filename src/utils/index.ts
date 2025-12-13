@@ -1,8 +1,6 @@
 import type { components } from '@octokit/openapi-types';
 import { ElMessage } from 'element-plus';
 
-export const delay = (t: number) => new Promise(res => setTimeout(res, t));
-
 const platformDict: Record<string, string> = {
   darwin: 'darwin',
   win32: 'windows',
@@ -29,3 +27,5 @@ export function copyString(str: string) {
   utools.copyText(str);
   ElMessage.success('已复制到剪贴板');
 }
+
+export const frpc = shallowRef(window.preload.frpc);

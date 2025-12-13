@@ -8,8 +8,8 @@ type DeepPartial<T> = {
 
 interface CustomConfig {
   saveRestart?: boolean;
-  // frpcPath?: string;
-  // configPath?: string;
+  frpcPath?: string;
+  configPath?: string;
 }
 
 // gen from openai https://chatgpt.com/c/ae97de97-f9f6-4c1b-b662-c1d0f564c779

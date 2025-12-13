@@ -2,7 +2,8 @@ import { useStorage } from '@vueuse/core';
 
 export const config = ref<FrpcConfig>({});
 
-export const customConfig = useStorage<CustomConfig>('custom-config', {}) as unknown as Ref<CustomConfig>;
+export const customConfig = useStorage<CustomConfig>('custom-config', {});
+export const custom = ref<CustomConfig>({});
 
 export const allName = computed(() => [...(config.value.proxies ?? []), ...(config.value.visitors ?? [])].map(it => it.name));
 export const allStart = computed(() => {

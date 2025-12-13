@@ -18,9 +18,11 @@ button {
   border: none;
   cursor: pointer;
 }
+
 button:disabled {
   cursor: no-drop;
 }
+
 p {
   margin: 0;
 }
@@ -32,15 +34,21 @@ html {
 
 html.dark {
   --color-bg: #303133;
+  --el-bg-color: #303133;
+  --el-fill-color-blank: #303133;
+  --el-border-color-lighter: #444;
+  --el-fill-color-lighter: #262626
 }
 
 ::-webkit-scrollbar {
   width: 6px;
   background-color: transparent;
 }
+
 ::-webkit-scrollbar-track {
   background-color: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   border-radius: 6px;
   background-color: #555;

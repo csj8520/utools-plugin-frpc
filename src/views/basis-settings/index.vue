@@ -98,9 +98,6 @@ import type { FormInstance } from 'element-plus';
 
 import { config } from '../../utils/config';
 
-const { frpc } = window.preload;
-const { utools } = window;
-
 const form = ref<FormInstance>(null!);
 
 defineExpose({ validate: () => form.value.validate().catch(() => false) });
